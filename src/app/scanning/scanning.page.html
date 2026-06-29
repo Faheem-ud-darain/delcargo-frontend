@@ -1,0 +1,330 @@
+<ion-header class="ion-no-border transparent-header" *ngIf="step !== 'scan'">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <button class="liquid-header-circle" (click)="cancelAndGoHome()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+    <ion-title class="premium-header-title">
+      <span *ngIf="step === 'partner'">Select Carrier</span>
+      <span *ngIf="step === 'review'">Review Batch</span>
+      <span *ngIf="step === 'receipt'">Receipt</span>
+    </ion-title>
+    <ion-buttons slot="end">
+      <button class="liquid-header-circle" *ngIf="step === 'review' && batchItems.length > 0" (click)="resumeScanning()">
+        <ion-icon name="camera-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="scan-content-bg ion-padding">
+
+  <!-- ============================================================ -->
+  <!-- STEP 1: SELECT PARTNER CARRIER                               -->
+  <!-- ============================================================ -->
+  <div *ngIf="step === 'partner'" class="step-card liquid-glass ion-padding animate-fade-in">
+    <div class="step-header">
+      <span class="step-badge">Step 1 of 3</span>
+      <h3>Select Partner Carrier</h3>
+      <p>Choose a carrier for this receiving batch.</p>
+    </div>
+
+    <!-- Search -->
+    <div class="partner-search-wrapper liquid-glass ion-margin-top ion-margin-bottom">
+      <ion-icon name="search-outline" class="partner-search-icon"></ion-icon>
+      <input
+        type="text"
+        [(ngModel)]="partnerSearchQuery"
+        placeholder="Search carriers (FedEx, UPS, Amazon…)"
+        class="partner-search-input-field"
+      />
+      <button class="clear-partner-search" *ngIf="partnerSearchQuery" (click)="partnerSearchQuery = ''">
+        <ion-icon name="close-circle"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Recent -->
+    <div class="recent-partners-section" *ngIf="!partnerSearchQuery">
+      <h4>Recent</h4>
+      <div class="recent-partners-grid ion-margin-top ion-margin-bottom">
+        <div
+          class="recent-partner-tile"
+          *ngFor="let rp of recentPartners"
+          [class]="rp.toLowerCase().replace(' ', '-') | slice:0:6"
+          (click)="selectPartner(rp)"
+        >
+          <div class="partner-logo">{{ rp.substring(0, 2).toUpperCase() }}</div>
+          <span>{{ rp }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Partners -->
+    <div class="all-partners-section">
+      <h4>{{ partnerSearchQuery ? 'Matches' : 'All Carriers' }}</h4>
+      <div class="partners-scroll-list ion-margin-top">
+        <div class="no-partners-state ion-text-center ion-padding" *ngIf="filteredPartnersList.length === 0">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <p>No match for "{{ partnerSearchQuery }}"</p>
+        </div>
+        <div
+          class="partner-list-row"
+          *ngFor="let p of filteredPartnersList"
+          (click)="selectPartner(p.carrierName)"
+        >
+          <div class="partner-row-left">
+            <div class="partner-row-logo" [class]="p.carrierName.toLowerCase().replace(' ', '-') | slice:0:6">
+              {{ p.carrierName.substring(0, 2).toUpperCase() }}
+            </div>
+            <span class="partner-row-name">{{ p.carrierName }}</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
+        </div>
+      </div>
+    </div>
+
+    <button class="cancel-flow-btn ion-margin-top" (click)="cancelAndGoHome()">
+      <ion-icon name="arrow-back-outline"></ion-icon> Cancel
+    </button>
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!-- STEP 2: FULL-SCREEN CAMERA                                   -->
+  <!-- ============================================================ -->
+  <div *ngIf="step === 'scan'" class="camera-page animate-fade-in">
+    <video #video autoplay playsinline webkit-playsinline muted></video>
+
+    <!-- Top bar -->
+    <div class="camera-header-bar" *ngIf="!isImageProcessing">
+      <button class="header-action-btn back-btn" (click)="goBackToPartner()">
+        <ion-icon name="arrow-back-outline"></ion-icon> Back
+      </button>
+      <button class="header-action-btn torch-btn" (click)="toggleTorch()" [class.torch-on]="torchOn">
+        <ion-icon [name]="torchOn ? 'flash-outline' : 'flash-off-outline'"></ion-icon>
+      </button>
+      <div class="header-title-pill">
+        <span>Carrier: <strong>{{ selectedPartner }}</strong></span>
+      </div>
+      <button class="header-action-btn switch-btn" *ngIf="videoDevices.length > 1" (click)="switchCamera()">
+        <ion-icon name="camera-reverse-outline"></ion-icon>
+      </button>
+      <button class="header-action-btn next-btn" [disabled]="batchItems.length === 0" (click)="goToReview()">
+        Review <ion-icon name="arrow-forward-outline"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Scanner overlays -->
+    <div class="overlay-top"    [style.height.px]="scannerY"></div>
+    <div class="overlay-left"   [style.top.px]="scannerY" [style.height.px]="scannerHeight" [style.width.px]="scannerX"></div>
+    <div class="overlay-right"  [style.top.px]="scannerY" [style.height.px]="scannerHeight" [style.left.px]="scannerX + scannerWidth"></div>
+    <div class="overlay-bottom" [style.top.px]="scannerY + scannerHeight"></div>
+
+    <!-- Scanner box -->
+    <div *ngIf="!isImageProcessing"
+         class="scanner-box"
+         [style.top.px]="scannerY"
+         [style.left.px]="scannerX"
+         [style.width.px]="scannerWidth"
+         [style.height.px]="scannerHeight">
+      <div class="corner top-left"></div>
+      <div class="corner top-right"></div>
+      <div class="corner bottom-left"></div>
+      <div class="corner bottom-right"></div>
+      <div class="scan-line"></div>
+    </div>
+
+    <!-- Processing spinner -->
+    <div class="loading-btn-container" *ngIf="isImageProcessing">
+      <ion-spinner name="crescent" color="light"></ion-spinner>
+      <p style="color:white;margin-top:10px;font-weight:700;">Processing…</p>
+    </div>
+
+    <!-- Bottom action bar -->
+    <div class="scanner-actions-bar" *ngIf="!isImageProcessing">
+      <button class="scanner-action-pill count-pill">
+        <ion-icon name="cube-outline"></ion-icon>
+        <strong>{{ batchItems.length }}</strong> Scanned
+      </button>
+      <button class="scanner-action-pill review-pill" (click)="goToReview()">
+        <ion-icon name="checkmark-done-outline"></ion-icon>
+        Review Batch
+      </button>
+      <button class="scanner-action-pill log-pill" (click)="showDebugPanel = !showDebugPanel">
+        <ion-icon name="terminal-outline"></ion-icon>
+        Log
+      </button>
+    </div>
+
+    <!-- Debug overlay -->
+    <div *ngIf="showDebugPanel" class="debug-panel">
+      <h4>Debug Log</h4>
+      <div *ngFor="let line of debugLogs" class="debug-line">{{ line }}</div>
+      <div *ngIf="debugLogs.length === 0" class="debug-empty">No logs yet.</div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!-- STEP 3: REVIEW BATCH                                         -->
+  <!-- ============================================================ -->
+  <div *ngIf="step === 'review'" class="step-card liquid-glass ion-padding animate-fade-in">
+    <div class="step-header">
+      <span class="step-badge">Step 2 of 3 &bull; Review</span>
+      <h3>Batch Session — {{ selectedPartner }}</h3>
+      <p>Tap any package to edit its status or tracking number.</p>
+    </div>
+
+    <!-- Resume scanning button -->
+    <button class="secondary-liquid-button resume-btn ion-margin-bottom" (click)="resumeScanning()">
+      <ion-icon name="camera-outline"></ion-icon> Resume Scanning
+    </button>
+
+    <!-- Package list -->
+    <div class="session-list-preview ion-margin-top">
+      <div class="session-scroll-items review-scroll-list">
+        <div class="review-item-group" *ngFor="let item of batchItems; let idx = index">
+
+          <div class="session-item-row review-row"
+               (click)="togglePackageDetail(item)"
+               [class.expanded]="selectedPackageForDetail === item">
+            <div class="session-item-left">
+              <span class="item-carrier-label" [class]="item.carrier.toLowerCase()">{{ item.carrier }}</span>
+              <strong class="item-tracking">{{ item.trackingNumber }}</strong>
+            </div>
+            <div class="session-item-right">
+              <span class="item-status-badge" [class]="item.status.toLowerCase()">
+                {{ item.status === 'normal' ? 'OK' : item.status.toUpperCase() }}
+              </span>
+              <ion-icon [name]="selectedPackageForDetail === item ? 'chevron-up-outline' : 'chevron-down-outline'" class="row-chevron"></ion-icon>
+            </div>
+          </div>
+
+          <div class="package-expand-card ion-padding animate-fade-in" *ngIf="selectedPackageForDetail === item">
+            <div class="expand-image-wrap" *ngIf="item.labelPhoto">
+              <img [src]="item.labelPhoto" alt="Label" class="expanded-photo">
+            </div>
+            <div class="expand-fields ion-margin-top">
+              <ion-item lines="none" class="glass-input-item">
+                <ion-label position="stacked">Edit Tracking Number</ion-label>
+                <ion-input [(ngModel)]="item.trackingNumber" type="text" (ionChange)="saveBatchState()"></ion-input>
+              </ion-item>
+            </div>
+            <div class="expand-status-picker ion-margin-top">
+              <span class="picker-label">Mark Status:</span>
+              <div class="picker-buttons">
+                <button class="status-action-btn missing-btn"
+                  [class.active]="item.status === 'missing'"
+                  (click)="updateItemStatus(item, item.status === 'missing' ? 'normal' : 'missing')">
+                  <ion-icon name="help-circle-outline"></ion-icon> Missing
+                </button>
+                <button class="status-action-btn refund-btn"
+                  [class.active]="item.status === 'refund'"
+                  (click)="updateItemStatus(item, item.status === 'refund' ? 'normal' : 'refund')">
+                  <ion-icon name="arrow-undo-outline"></ion-icon> Refund
+                </button>
+                <button class="status-action-btn rejected-btn"
+                  [class.active]="item.status === 'rejected'"
+                  (click)="updateItemStatus(item, item.status === 'rejected' ? 'normal' : 'rejected')">
+                  <ion-icon name="close-circle-outline"></ion-icon> Rejected
+                </button>
+              </div>
+            </div>
+            <div class="delete-action-row ion-margin-top ion-text-center">
+              <button class="delete-package-btn" (click)="removeScannedItem(idx)">
+                <ion-icon name="trash-outline"></ion-icon> Remove
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="empty-batch-state ion-text-center ion-padding" *ngIf="batchItems.length === 0">
+          <ion-icon name="cube-outline"></ion-icon>
+          <p>No packages scanned yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <button
+      class="primary-liquid-button finish-batch-btn ion-margin-top"
+      [disabled]="isSubmittingBatch || batchItems.length === 0"
+      (click)="finishBatch()">
+      <span *ngIf="!isSubmittingBatch">
+        <ion-icon name="checkmark-done-outline"></ion-icon> Finish & Generate Receipt
+      </span>
+      <ion-spinner *ngIf="isSubmittingBatch" name="crescent" color="light"></ion-spinner>
+    </button>
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!-- STEP 4: RECEIPT                                              -->
+  <!-- ============================================================ -->
+  <div *ngIf="step === 'receipt' && completedReceipt" class="receipt-screen-container ion-margin-bottom animate-fade-in">
+    <div class="receipt-card liquid-glass ion-padding">
+
+      <div class="receipt-barcode-header">
+        <div class="barcode-lines"></div>
+        <span class="receipt-serial">{{ completedReceipt.serial }}</span>
+      </div>
+
+      <div class="receipt-title-block ion-text-center">
+        <ion-icon name="checkmark-circle-outline" class="receipt-success-icon"></ion-icon>
+        <h2>Transaction Receipt</h2>
+        <p>DelCargo Warehousing Log System</p>
+      </div>
+
+      <div class="receipt-details-table ion-margin-top">
+        <div class="r-row">
+          <span class="r-label">Date & Time:</span>
+          <span class="r-val">{{ completedReceipt.timestamp | date:'medium' }}</span>
+        </div>
+        <div class="r-row">
+          <span class="r-label">Warehouse:</span>
+          <span class="r-val">{{ completedReceipt.locationName }} ({{ completedReceipt.locationId }})</span>
+        </div>
+        <div class="r-row">
+          <span class="r-label">Operator:</span>
+          <span class="r-val">@{{ completedReceipt.operator }}</span>
+        </div>
+        <div class="r-row">
+          <span class="r-label">Carrier:</span>
+          <span class="r-val">{{ completedReceipt.partner }}</span>
+        </div>
+        <div class="r-row total">
+          <span class="r-label">Total Packages:</span>
+          <span class="r-val">{{ completedReceipt.totalCount }} items</span>
+        </div>
+      </div>
+
+      <div class="receipt-items-section ion-margin-top">
+        <h4>Received Package Log</h4>
+        <div class="receipt-items-list">
+          <div class="receipt-item-row" *ngFor="let item of completedReceipt.items">
+            <div class="r-item-left">
+              <span class="c-badge" [class]="item.carrier.toLowerCase()">{{ item.carrier }}</span>
+              <span class="r-tracking">{{ item.trackingNumber }}</span>
+            </div>
+            <span class="r-badge" [class]="item.status.toLowerCase()">{{ item.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-footer ion-text-center ion-margin-top">
+        <p>All items verified and processed.</p>
+      </div>
+    </div>
+
+    <div class="receipt-actions ion-margin-top">
+      <button class="primary-liquid-button start-new-btn" (click)="startNewBatch()">
+        <ion-icon name="add-outline"></ion-icon> Start New Batch
+      </button>
+      <button class="secondary-liquid-button go-home-btn ion-margin-top" (click)="goHome()">
+        <ion-icon name="home-outline"></ion-icon> Go to Dashboard
+      </button>
+    </div>
+  </div>
+
+</ion-content>

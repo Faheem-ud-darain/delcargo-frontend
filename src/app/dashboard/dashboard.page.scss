@@ -1,0 +1,2161 @@
+.liquid-glass-header {
+  --background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.content-bg {
+  --background: radial-gradient(circle at 10% 20%, rgba(255, 240, 230, 0.4) 0%, rgba(246, 248, 251, 1) 90%);
+}
+
+.warehouse-card {
+  position: relative;
+  overflow: hidden;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  .wh-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .wh-icon {
+      font-size: 28px;
+      color: #EB8455;
+      padding: 8px;
+      background: rgba(235, 132, 85, 0.1);
+      border-radius: 10px;
+    }
+    
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+      color: #111;
+    }
+    
+    p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: #666;
+    }
+  }
+
+  .session-counter {
+    background: rgba(235, 132, 85, 0.08);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #EB8455;
+    font-weight: 700;
+    border: 1px solid rgba(235, 132, 85, 0.15);
+  }
+}
+
+.admin-warning {
+  max-width: 450px;
+  margin: 40px auto;
+  
+  .admin-warn-icon {
+    font-size: 48px;
+    color: #EB8455;
+    margin-bottom: 12px;
+  }
+  
+  h3 {
+    margin: 0 0 8px;
+    font-weight: 750;
+  }
+  
+  p {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+}
+
+
+/* ============================================== */
+/* HOME DASHBOARD - STAT PILLS                   */
+/* ============================================== */
+
+.home-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.home-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  
+  .hstat-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    
+    &.blue  { color: #3880FF; }
+    &.red   { color: #E53935; }
+    &.orange { color: #EB8455; }
+  }
+  
+  .hstat-content {
+    display: flex;
+    flex-direction: column;
+    
+    strong {
+      font-size: 18px;
+      font-weight: 850;
+      color: #111;
+      line-height: 1;
+    }
+    
+    span {
+      font-size: 10px;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-top: 2px;
+    }
+  }
+}
+
+/* Scan CTA Card */
+.scan-cta-card {
+  border-radius: 20px;
+  
+  .scan-cta-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(235, 132, 85, 0.08);
+    border: 1px solid rgba(235, 132, 85, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    
+    ion-icon {
+      font-size: 30px;
+      color: #EB8455;
+    }
+  }
+  
+  h2 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 800;
+    color: #111;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+  }
+}
+
+.cta-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  .clear-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+}
+
+/* ============================================== */
+/* TODAY'S RECEIVED PACKAGES SECTION             */
+/* ============================================== */
+
+.today-section-card {
+  border-radius: 20px;
+  overflow: hidden;
+  
+  .today-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 14px;
+    
+    .today-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      .today-dot-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2dd36f;
+        box-shadow: 0 0 0 3px rgba(45, 211, 111, 0.2);
+        flex-shrink: 0;
+        animation: pulseLive 2s infinite;
+      }
+      
+      h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 800;
+        color: #111;
+      }
+      
+      p {
+        margin: 1px 0 0;
+        font-size: 10px;
+        color: #999;
+        font-weight: 500;
+      }
+    }
+    
+    .today-count-badge {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 8px;
+      background: rgba(235, 132, 85, 0.1);
+      border: 1px solid rgba(235, 132, 85, 0.2);
+      color: #D45520;
+      font-size: 13px;
+      font-weight: 850;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  .today-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.05);
+    margin: 0 16px;
+  }
+  
+  .today-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px;
+    gap: 6px;
+    
+    ion-icon {
+      font-size: 40px;
+      color: rgba(0, 0, 0, 0.12);
+    }
+    
+    p {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 650;
+      color: #888;
+    }
+    
+    span {
+      font-size: 11px;
+      color: #bbb;
+      text-align: center;
+    }
+  }
+  
+  .today-pkg-list {
+    display: flex;
+    flex-direction: column;
+    
+    .today-pkg-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      
+      &:last-child { border-bottom: none; }
+      
+      .today-pkg-index {
+        font-size: 10px;
+        font-weight: 750;
+        color: #ccc;
+        width: 16px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      
+      .today-carrier-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+        text-transform: uppercase;
+        
+        &.fedex   { background: #4B2989; }
+        &.ups     { background: #ffaa00; color: #111; }
+        &.amazon  { background: #232f3e; }
+        &.usps    { background: #3880FF; }
+        &.dhl     { background: #F44336; }
+        &.default { background: #EB8455; }
+      }
+      
+      .today-pkg-details {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        
+        .today-tracking {
+          font-size: 12px;
+          font-weight: 750;
+          color: #111;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        
+        .today-time {
+          font-size: 10px;
+          color: #999;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          
+          ion-icon { font-size: 11px; color: #ccc; }
+        }
+      }
+      
+      .today-pkg-status {
+        flex-shrink: 0;
+        
+        .today-condition-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          font-size: 10px;
+          font-weight: 750;
+          padding: 3px 8px;
+          border-radius: 20px;
+          white-space: nowrap;
+          
+          ion-icon { font-size: 11px; }
+          
+          &.add {
+            background: rgba(45, 211, 111, 0.1);
+            color: #1a8a45;
+            border: 1px solid rgba(45, 211, 111, 0.2);
+          }
+          
+          &.damage {
+            background: rgba(229, 57, 53, 0.08);
+            color: #E53935;
+            border: 1px solid rgba(229, 57, 53, 0.15);
+          }
+          
+          &.refund {
+            background: rgba(255, 160, 0, 0.1);
+            color: #e67c00;
+            border: 1px solid rgba(255, 160, 0, 0.2);
+          }
+        }
+      }
+    }
+  }
+  
+  .today-footer-summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    
+    span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a8a45;
+      
+      ion-icon { font-size: 13px; }
+      
+      &.flagged {
+        color: #E53935;
+      }
+      
+      &.shift-label {
+        color: #888;
+        margin-left: auto;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+@keyframes pulseLive {
+  0%   { box-shadow: 0 0 0 0 rgba(45, 211, 111, 0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(45, 211, 111, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(45, 211, 111, 0); }
+}
+
+/* ============================================== */
+/* WIZARD CONTAINER AND GENERAL STEP LAYOUTS      */
+/* ============================================== */
+
+
+.step-card {
+  padding: 24px 20px;
+  position: relative;
+  
+  .step-header {
+    margin-bottom: 16px;
+    
+    .step-badge {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #EB8455;
+      background: rgba(235, 132, 85, 0.08);
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: #111;
+    }
+    
+    p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.4;
+    }
+  }
+}
+
+.flow-icon-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(235, 132, 85, 0.08);
+  border: 1px solid rgba(235, 132, 85, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto 20px;
+  box-shadow: inset 0 2px 6px rgba(235, 132, 85, 0.05);
+  
+  ion-icon {
+    font-size: 32px;
+    color: #EB8455;
+  }
+}
+
+.start-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cancel-flow-btn {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #666;
+  font-size: 13px;
+  font-weight: 650;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  
+  &:active {
+    background: rgba(0, 0, 0, 0.03);
+  }
+}
+
+/* ============================================== */
+/* STEP 1: PARTNER SELECTION GRID                 */
+/* ============================================== */
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.partner-tile {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  
+  .partner-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  }
+  
+  span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+  }
+  
+  /* Carrier Branding */
+  &.fedex {
+    &:active { border-color: #4B2989; background: rgba(75, 41, 137, 0.03); }
+    .partner-logo { background: #4B2989; }
+  }
+  &.ups {
+    &:active { border-color: #ffaa00; background: rgba(255, 170, 0, 0.03); }
+    .partner-logo { background: #ffaa00; color: #111; }
+  }
+  &.amazon {
+    &:active { border-color: #232f3e; background: rgba(35, 47, 62, 0.03); }
+    .partner-logo { background: #232f3e; }
+  }
+  &.usps {
+    &:active { border-color: #3880FF; background: rgba(56, 128, 255, 0.03); }
+    .partner-logo { background: #3880FF; }
+  }
+  &.dhl {
+    &:active { border-color: #F44336; background: rgba(244, 67, 54, 0.03); }
+    .partner-logo { background: #F44336; }
+  }
+  &.custom {
+    &:active { border-color: #EB8455; background: rgba(235, 132, 85, 0.03); }
+    .partner-logo { background: #72727a; }
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* ============================================== */
+/* STEP 2: SCANNER & PREVIEW                      */
+/* ============================================== */
+
+.scanner-view-box {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #E5E8F0;
+  border: 2px dashed rgba(235, 132, 85, 0.25);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capture-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  
+  .camera-placeholder-icon {
+    font-size: 48px;
+    color: rgba(0, 0, 0, 0.15);
+  }
+  
+  .capture-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+.photo-preview-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .photo-preview {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .photo-preview.animating-rotate {
+    animation: pulseGlow 0.8s ease-in-out;
+  }
+  
+  .rotation-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(235, 132, 85, 0.95);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 750;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .retake-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+.scanning-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 20px;
+  z-index: 10;
+  
+  .scan-text {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 10px;
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+  }
+  
+  .laser-beam {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #EB8455;
+    box-shadow: 0 0 12px 3px #EB8455;
+    animation: laserScan 2s linear infinite;
+  }
+}
+
+.ocr-results-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(235, 132, 85, 0.1);
+  border-radius: 12px;
+  
+  h4 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 750;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .glass-input-item {
+    --background: rgba(255, 255, 255, 0.9);
+    --border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    
+    ion-label {
+      font-size: 10px;
+      color: #666;
+      font-weight: 600;
+    }
+    
+    ion-input {
+      font-weight: 700;
+      color: #111;
+      font-size: 15px;
+    }
+  }
+  
+  .confirm-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+}
+
+/* ============================================== */
+/* STEP 3: STATUS SELECTION CARD TILES            */
+/* ============================================== */
+
+.status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-tile {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(0,0,0,0.04);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+  
+  .status-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  
+  .status-info {
+    flex: 1;
+    h4 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: #666;
+      line-height: 1.3;
+    }
+  }
+  
+  &.add {
+    .status-icon-box { background: rgba(45, 211, 111, 0.1); color: #2dd36f; }
+    h4 { color: #2dd36f; }
+    &:active { border-color: #2dd36f; background: rgba(45, 211, 111, 0.02); }
+  }
+  
+  &.damage {
+    .status-icon-box { background: rgba(244, 67, 54, 0.1); color: #F44336; }
+    h4 { color: #F44336; }
+    &:active { border-color: #F44336; background: rgba(244, 67, 54, 0.02); }
+  }
+  
+  &.refund {
+    .status-icon-box { background: rgba(235, 132, 85, 0.1); color: #EB8455; }
+    h4 { color: #EB8455; }
+    &:active { border-color: #EB8455; background: rgba(235, 132, 85, 0.02); }
+  }
+  
+  &:active {
+    transform: scale(0.985);
+  }
+}
+
+/* ============================================== */
+/* STEP 4: BATCH LOOP OPTIONS                     */
+/* ============================================== */
+
+.session-list-preview {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.06);
+  
+  h4 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #666;
+    letter-spacing: 0.5px;
+  }
+}
+
+.session-scroll-items {
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  
+  .session-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .item-carrier-label {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 4px;
+      border-radius: 4px;
+      
+      &.fedex { background: rgba(75, 41, 137, 0.1); color: #4B2989; }
+      &.ups { background: rgba(255, 193, 7, 0.15); color: #b78700; }
+      &.amazon { background: rgba(0, 0, 0, 0.06); color: #222; }
+      &.usps { background: rgba(56, 128, 255, 0.1); color: #3880FF; }
+      &.dhl { background: rgba(244, 67, 54, 0.1); color: #F44336; }
+    }
+    
+    .item-tracking {
+      font-size: 12px;
+      color: #111;
+    }
+  }
+  
+  .item-status-badge {
+    font-size: 9px;
+    font-weight: 750;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    
+    &.add { background: rgba(45, 211, 111, 0.08); color: #2dd36f; }
+    &.damage { background: rgba(244, 67, 54, 0.08); color: #F44336; }
+    &.refund { background: rgba(235, 132, 85, 0.08); color: #EB8455; }
+  }
+}
+
+.loop-grid-single {
+  display: block;
+  width: 100%;
+}
+
+.loop-btn-full {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(235, 132, 85, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  ion-icon {
+    font-size: 26px;
+    color: #EB8455;
+  }
+  
+  div {
+    text-align: left;
+  }
+
+  strong {
+    font-size: 13px;
+    font-weight: 800;
+    color: #111;
+    display: block;
+  }
+  
+  span {
+    font-size: 9.5px;
+    color: #666;
+    margin-top: 2px;
+    display: block;
+    font-weight: 550;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+    background: rgba(235, 132, 85, 0.03);
+  }
+}
+
+.finish-batch-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(235, 132, 85, 0.2);
+}
+
+/* ============================================== */
+/* STEP 5: RECEIPT SCREEN AND LAYOUTS             */
+/* ============================================== */
+
+.receipt-screen-container {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.receipt-card {
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 20px !important;
+  background: white !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+.receipt-barcode-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+  
+  .barcode-lines {
+    width: 140px;
+    height: 32px;
+    background: repeating-linear-gradient(
+      90deg,
+      #111,
+      #111 2px,
+      transparent 2px,
+      transparent 6px,
+      #111 6px,
+      #111 7px,
+      transparent 7px,
+      transparent 9px
+    );
+    opacity: 0.85;
+  }
+  
+  .receipt-serial {
+    font-family: monospace;
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+}
+
+.receipt-title-block {
+  margin-bottom: 24px;
+  
+  .receipt-success-icon {
+    font-size: 44px;
+    color: #2dd36f;
+    margin-bottom: 6px;
+  }
+  
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 850;
+    color: #111;
+  }
+  
+  p {
+    margin: 2px 0 0;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #777;
+    letter-spacing: 0.5px;
+  }
+}
+
+.receipt-details-table {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  
+  .r-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    line-height: 1.3;
+    
+    .r-label {
+      color: #666;
+      font-weight: 600;
+    }
+    
+    .r-val {
+      color: #111;
+      font-weight: 750;
+      text-align: right;
+    }
+    
+    &.total {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      font-size: 13px;
+      
+      .r-label {
+        color: #111;
+        font-weight: 800;
+      }
+      .r-val {
+        color: #EB8455;
+        font-weight: 850;
+      }
+    }
+  }
+}
+
+.receipt-items-section {
+  h4 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 850;
+    text-transform: uppercase;
+    color: #444;
+    letter-spacing: 0.5px;
+    padding-left: 2px;
+  }
+}
+
+.receipt-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.01);
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.receipt-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  
+  .r-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .c-badge {
+      font-size: 8px;
+      font-weight: 850;
+      text-transform: uppercase;
+      padding: 2px 4px;
+      border-radius: 4px;
+      
+      &.fedex { background: rgba(75, 41, 137, 0.1); color: #4B2989; }
+      &.ups { background: rgba(255, 193, 7, 0.15); color: #b78700; }
+      &.amazon { background: rgba(0, 0, 0, 0.06); color: #222; }
+      &.usps { background: rgba(56, 128, 255, 0.1); color: #3880FF; }
+      &.dhl { background: rgba(244, 67, 54, 0.1); color: #F44336; }
+    }
+    
+    .r-tracking {
+      font-size: 11px;
+      font-weight: 650;
+      color: #333;
+    }
+  }
+  
+  .r-badge {
+    font-size: 8px;
+    font-weight: 850;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    
+    &.add { background: rgba(45, 211, 111, 0.08); color: #2dd36f; }
+    &.damage { background: rgba(244, 67, 54, 0.08); color: #F44336; }
+    &.refund { background: rgba(235, 132, 85, 0.08); color: #EB8455; }
+  }
+}
+
+.receipt-footer {
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+  padding-top: 14px;
+  
+  p {
+    margin: 0;
+    font-size: 10px;
+    color: #888;
+    line-height: 1.4;
+    font-weight: 550;
+  }
+}
+
+.start-new-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+@keyframes laserScan {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  50% { box-shadow: 0 0 20px 8px rgba(235, 132, 85, 0.3); }
+  100% { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+}
+
+/* ============================================== */
+/* HOME PORTAL DASHBOARD WIDGETS                  */
+/* ============================================== */
+
+.home-portal-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.welcome-widget-card {
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(235, 132, 85, 0.1) !important;
+}
+
+.welcome-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  
+  .welcome-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #EB8455, #f3a079);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(235, 132, 85, 0.2);
+  }
+  
+  .welcome-text {
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #111;
+    }
+    p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: #666;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Stats Cards Widget */
+.home-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.h-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 16px !important;
+  
+  .h-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    
+    &.blue { background: rgba(56, 128, 255, 0.08); color: #3880FF; }
+    &.red { background: rgba(244, 67, 54, 0.08); color: #F44336; }
+    &.orange { background: rgba(235, 132, 85, 0.08); color: #EB8455; }
+  }
+  
+  .h-stat-content {
+    h4 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 850;
+      color: #111;
+    }
+    p {
+      margin: 2px 0 0;
+      font-size: 10px;
+      font-weight: 700;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+  }
+}
+
+.mini-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+  
+  .mini-progress-fill {
+    height: 100%;
+    background: #EB8455;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+}
+
+/* Operations Panel Widget */
+.ops-panel-card {
+  border-radius: 16px !important;
+  
+  h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #111;
+  }
+  .section-desc {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: #666;
+  }
+}
+
+.ops-actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ops-action-tile {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  
+  .tile-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  
+  .tile-info {
+    flex: 1;
+    h4 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 750;
+      color: #111;
+    }
+    p {
+      margin: 2px 0 0;
+      font-size: 10px;
+      color: #666;
+    }
+  }
+  
+  .tile-arrow {
+    font-size: 16px;
+    color: #999;
+  }
+  
+  &.start-batch-tile {
+    border-color: rgba(235, 132, 85, 0.15);
+    .tile-icon-box { background: rgba(235, 132, 85, 0.1); color: #EB8455; }
+    &:active { background: rgba(235, 132, 85, 0.03); }
+  }
+  
+  &.ledger-tile {
+    .tile-icon-box { background: rgba(0, 0, 0, 0.04); color: #555; }
+    &:active { background: rgba(0, 0, 0, 0.02); }
+  }
+  
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+/* Recent Activity Feed Widget */
+.recent-feed-card {
+  border-radius: 16px !important;
+  
+  .feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    
+    h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+      color: #111;
+    }
+    
+    .feed-sub {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 750;
+      color: #EB8455;
+    }
+  }
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  .feed-empty-state {
+    .empty-feed-icon {
+      font-size: 32px;
+      color: rgba(0,0,0,0.1);
+      margin-bottom: 6px;
+    }
+    p {
+      margin: 0;
+      font-size: 11px;
+      color: #666;
+    }
+  }
+}
+
+.feed-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0,0,0,0.03);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  .row-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .row-carrier-badge {
+      font-size: 8px;
+      font-weight: 850;
+      text-transform: uppercase;
+      padding: 2px 4px;
+      border-radius: 4px;
+      
+      &.fedex { background: rgba(75, 41, 137, 0.1); color: #4B2989; }
+      &.ups { background: rgba(255, 193, 7, 0.15); color: #b78700; }
+      &.amazon { background: rgba(0, 0, 0, 0.06); color: #222; }
+      &.usps { background: rgba(56, 128, 255, 0.1); color: #3880FF; }
+      &.dhl { background: rgba(244, 67, 54, 0.1); color: #F44336; }
+    }
+    
+    .row-tracking {
+      font-size: 12px;
+      color: #111;
+    }
+  }
+  
+  .row-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    .row-time {
+      font-size: 10px;
+      color: #777;
+      font-weight: 600;
+    }
+    
+    ion-icon {
+      font-size: 14px;
+      color: #999;
+    }
+  }
+  
+  &:active {
+    background: rgba(235, 132, 85, 0.02);
+  }
+}
+
+/* Done Actions under Receipt card */
+.receipt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.done-navigation-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  
+  .done-btn {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+    
+    ion-icon {
+      font-size: 16px;
+    }
+    
+    &.home-btn {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      color: #333;
+      
+      &:active { background: rgba(0, 0, 0, 0.03); }
+    }
+    
+    &.ledger-btn {
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.8);
+      color: white;
+      
+      &:active { background: rgba(0, 0, 0, 0.85); }
+    }
+  }
+}
+
+/* ============================================== */
+/* PARTNER SEARCH AND 50+ SCROLLABLE LIST STYLES  */
+/* ============================================== */
+
+.partner-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(235, 132, 85, 0.1) !important;
+  border-radius: 12px !important;
+  
+  .partner-search-icon {
+    font-size: 18px;
+    color: #EB8455;
+  }
+  
+  .partner-search-input-field {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    outline: none;
+    
+    &::placeholder {
+      color: #777;
+    }
+  }
+  
+  .clear-partner-search {
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.recent-partners-section, .all-partners-section {
+  h4 {
+    margin: 16px 0 8px;
+    font-size: 12px;
+    font-weight: 850;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-left: 2px;
+  }
+}
+
+.recent-partners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.recent-partner-tile {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  
+  .partner-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  
+  span {
+    font-size: 10px;
+    font-weight: 750;
+    color: #333;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+  
+  /* Brand colors */
+  &.fedex { .partner-logo { background: #4B2989; } }
+  &.ups { .partner-logo { background: #ffaa00; color: #111; } }
+  &.amazon { .partner-logo { background: #232f3e; } }
+  &.dhl-ex { .partner-logo { background: #d32f2f; } }
+  &.usps { .partner-logo { background: #3880FF; } }
+  &.dhl-ec { .partner-logo { background: #ffcc00; color: #111; } }
+  
+  &:active {
+    transform: scale(0.95);
+    background: rgba(235, 132, 85, 0.02);
+    border-color: rgba(235, 132, 85, 0.2);
+  }
+}
+
+.partners-scroll-list {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  border-radius: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.no-partners-state {
+  color: #777;
+  font-size: 12px;
+  
+  ion-icon {
+    font-size: 24px;
+    color: #EB8455;
+    margin-bottom: 4px;
+  }
+}
+
+.partner-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  
+  .partner-row-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .partner-row-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #72727a;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: uppercase;
+      
+      /* Matching logos dynamically */
+      &.fedex { background: #4B2989; }
+      &.ups { background: #ffaa00; color: #111; }
+      &.amazon { background: #232f3e; }
+      &.dhl-ex { background: #d32f2f; }
+      &.usps { background: #3880FF; }
+      &.dhl-ec { background: #ffcc00; color: #111; }
+    }
+    
+    .partner-row-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111;
+    }
+  }
+  
+  ion-icon {
+    font-size: 14px;
+  }
+  
+  &:active {
+    background: rgba(235, 132, 85, 0.02);
+    border-color: rgba(235, 132, 85, 0.15);
+  }
+}
+
+/* ============================================== */
+/* QUICK STATUS SELECTOR ACTION BUTTONS (STEP 2) */
+/* ============================================== */
+.ocr-actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+
+  .confirm-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .ocr-secondary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .status-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+
+    ion-icon {
+      font-size: 16px;
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.damage {
+      background: rgba(229, 57, 53, 0.08);
+      color: #E53935;
+      border-color: rgba(229, 57, 53, 0.15);
+
+      &:active {
+        background: rgba(229, 57, 53, 0.16);
+      }
+    }
+
+    &.refund {
+      background: rgba(235, 132, 85, 0.08);
+      color: #D45520;
+      border-color: rgba(235, 132, 85, 0.15);
+
+      &:active {
+        background: rgba(235, 132, 85, 0.16);
+      }
+    }
+  }
+}
+
+/* ============================================== */
+/* CONTINUOUS SCAN BANNER & ACTIONS (STEP 2)      */
+/* ============================================== */
+.session-progress-banner {
+  background: rgba(235, 132, 85, 0.07);
+  border: 1px solid rgba(235, 132, 85, 0.15);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  
+  .progress-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .spin-icon {
+      font-size: 20px;
+      color: #EB8455;
+      animation: spin 3s linear infinite;
+    }
+    
+    strong {
+      font-size: 13px;
+      font-weight: 800;
+      color: #111;
+      display: block;
+    }
+    
+    span {
+      font-size: 10px;
+      color: #EB8455;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+  }
+}
+
+.scan-nav-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  
+  .review-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================== */
+/* STEP 3: DETAILED BATCH REVIEW STYLES           */
+/* ============================================== */
+.review-scroll-list {
+  max-height: 380px !important;
+}
+
+.review-item-group {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.review-row {
+  cursor: pointer;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none !important;
+  background: transparent !important;
+  
+  .session-item-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    .row-chevron {
+      font-size: 16px;
+      color: #888;
+      transition: transform 0.2s;
+    }
+  }
+  
+  &.expanded {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px 14px 0 0;
+  }
+}
+
+.package-expand-card {
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  
+  .expand-image-wrap {
+    width: 100%;
+    max-height: 160px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f7f9fc;
+    
+    .expanded-photo {
+      max-width: 100%;
+      max-height: 160px;
+      object-fit: contain;
+    }
+  }
+  
+  .expand-status-picker {
+    .picker-label {
+      font-size: 11px;
+      font-weight: 750;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    .picker-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      
+      .status-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 10px 4px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 750;
+        color: #666;
+        background: #f7f9fc;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        ion-icon {
+          font-size: 15px;
+        }
+        
+        &.active {
+          &.ok-btn {
+            background: rgba(45, 211, 111, 0.1);
+            color: #2dd36f;
+            border-color: rgba(45, 211, 111, 0.25);
+          }
+          &.damage-btn {
+            background: rgba(229, 57, 53, 0.1);
+            color: #E53935;
+            border-color: rgba(229, 57, 53, 0.25);
+          }
+          &.refund-btn {
+            background: rgba(235, 132, 85, 0.1);
+            color: #D45520;
+            border-color: rgba(235, 132, 85, 0.25);
+          }
+        }
+      }
+    }
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================== */
+/* FULL SCREEN CAMERA SCANNING STYLES             */
+/* ============================================== */
+
+.capture-btn-container {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+
+  .capture-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 5px solid white;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+    &:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.6);
+    }
+  }
+}
+
+.scanner-actions-bar {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+  right: 10px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  .scanner-action-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 750;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &.count-pill {
+      background: rgba(0, 0, 0, 0.5);
+      strong {
+        color: #2dd36f;
+      }
+    }
+
+    &.review-pill {
+      background: linear-gradient(135deg, #EB8455 0%, #D45520 100%);
+      box-shadow: 0 4px 12px rgba(212, 85, 32, 0.3);
+    }
+  }
+}
+
+/* ============================================== */
+/* MOCK STATUS COLOR ASSIGNMENTS AND DELETES      */
+/* ============================================== */
+
+.status-action-btn {
+  &.missing-btn {
+    border-color: rgba(255, 196, 9, 0.25);
+    color: #ffc409;
+    background: rgba(255, 196, 9, 0.05);
+
+    &.active {
+      background: #ffc409;
+      color: black;
+      box-shadow: 0 4px 10px rgba(255, 196, 9, 0.25);
+    }
+  }
+
+  &.rejected-btn {
+    border-color: rgba(235, 68, 90, 0.25);
+    color: #eb445a;
+    background: rgba(235, 68, 90, 0.05);
+
+    &.active {
+      background: #eb445a;
+      color: white;
+      box-shadow: 0 4px 10px rgba(235, 68, 90, 0.25);
+    }
+  }
+}
+
+.item-status-badge {
+  &.missing {
+    background: rgba(255, 196, 9, 0.12);
+    border-color: rgba(255, 196, 9, 0.3);
+    color: #e0ac08;
+  }
+
+  &.rejected {
+    background: rgba(235, 68, 90, 0.12);
+    border-color: rgba(235, 68, 90, 0.3);
+    color: #eb445a;
+  }
+}
+
+.delete-package-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(235, 68, 90, 0.08);
+  border: 1px solid rgba(235, 68, 90, 0.2);
+  color: #eb445a;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.96);
+    background: rgba(235, 68, 90, 0.15);
+  }
+}
+
+/* ============================================== */
+/* CAMERA SCREEN TOP HEADER BAR STYLES            */
+/* ============================================== */
+
+.camera-header-bar {
+  position: absolute;
+  top: 40px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 30;
+}
+
+.header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.header-title-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 12px;
+  backdrop-filter: blur(8px);
+  
+  strong {
+    color: #EB8455;
+  }
+}
+
+
+
+

@@ -1,0 +1,650 @@
+.content-bg {
+  --background: radial-gradient(circle at 10% 20%, rgba(255, 240, 230, 0.4) 0%, rgba(246, 248, 251, 1) 90%);
+}
+
+/* 1. Profile Hero Card */
+.my-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  
+  .my-profile-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    
+    .profile-avatar-ring {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #EB8455 0%, #D45520 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 15px rgba(212, 85, 32, 0.2);
+      
+      .avatar-text {
+        color: #fff;
+        font-size: 18px;
+        font-weight: 850;
+        letter-spacing: -0.5px;
+      }
+    }
+    
+    .my-profile-info {
+      h3 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 850;
+        color: #111;
+        letter-spacing: -0.3px;
+      }
+      p {
+        margin: 3px 0 6px;
+        font-size: 11px;
+        color: #666;
+        font-weight: 500;
+      }
+      .profile-role-badge {
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        display: inline-block;
+        border: 1px solid transparent;
+        
+        &.user {
+          background: rgba(235, 132, 85, 0.1);
+          color: #D45520;
+          border-color: rgba(235, 132, 85, 0.2);
+        }
+        &.manager {
+          background: rgba(56, 128, 255, 0.08);
+          color: #3880FF;
+          border-color: rgba(56, 128, 255, 0.15);
+        }
+        &.admin {
+          background: rgba(0, 0, 0, 0.05);
+          color: #333;
+          border-color: rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+  
+  .my-profile-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    
+    .wh-icon-sm {
+      font-size: 18px;
+      color: #EB8455;
+    }
+    .wh-name-sm {
+      font-size: 11px;
+      font-weight: 750;
+      color: #333;
+      text-align: right;
+    }
+    .shift-dot {
+      font-size: 10px;
+      font-weight: 700;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      
+      .dot-live {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #2dd36f;
+        box-shadow: 0 0 8px #2dd36f;
+      }
+    }
+  }
+}
+
+/* 2. Personal Stats Grid */
+.personal-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  
+  .stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: 900;
+      color: #111;
+      line-height: 1;
+      
+      &.orange {
+        color: #D45520;
+      }
+    }
+    
+    .stat-label {
+      font-size: 9px;
+      font-weight: 750;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 6px;
+    }
+  }
+}
+
+/* 3. Personal History Card */
+.personal-history-card {
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  
+  .history-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    h4 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      
+      ion-icon {
+        font-size: 16px;
+      }
+    }
+    
+    .history-count {
+      font-size: 10px;
+      font-weight: 750;
+      color: #EB8455;
+      background: rgba(235, 132, 85, 0.08);
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(235, 132, 85, 0.15);
+    }
+  }
+}
+
+/* Profile Search Input */
+.profile-search-row {
+  .profile-search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    padding: 6px 10px;
+    
+    .search-icon-sm {
+      font-size: 16px;
+      color: #EB8455;
+      flex-shrink: 0;
+    }
+    
+    .profile-search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: #111;
+      font-family: 'Inter', sans-serif;
+      
+      &::placeholder {
+        color: #bbb;
+        font-weight: 400;
+      }
+    }
+    
+    .search-clear-btn-sm {
+      background: none;
+      border: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  }
+}
+
+.history-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05);
+  margin: 12px 0;
+}
+
+/* History Rows List */
+.personal-history-list {
+  display: flex;
+  flex-direction: column;
+  
+  .history-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &:active {
+      background: rgba(235, 132, 85, 0.03);
+    }
+    
+    .item-carrier-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 850;
+      color: #fff;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      
+      &.fedex { background: #4B2989; }
+      &.ups { background: #ffaa00; color: #111; }
+      &.amazon, &.amazon-logistics { background: #232f3e; }
+      &.usps { background: #3880FF; }
+      &.dhl, &.dhl-express { background: #F44336; }
+    }
+    
+    .item-details {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      
+      .item-tracking {
+        font-size: 12px;
+        font-weight: 750;
+        color: #111;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .item-time {
+        font-size: 9px;
+        color: #888;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-top: 1px;
+        
+        ion-icon {
+          font-size: 11px;
+        }
+      }
+    }
+    
+    .item-tags {
+      flex-shrink: 0;
+      
+      .h-tag {
+        font-size: 8px;
+        font-weight: 750;
+        text-transform: uppercase;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        
+        &.ok {
+          background: rgba(45, 211, 111, 0.08);
+          color: #2dd36f;
+          border-color: rgba(45, 211, 111, 0.15);
+        }
+        &.damage {
+          background: rgba(244, 67, 54, 0.08);
+          color: #F44336;
+          border-color: rgba(244, 67, 54, 0.15);
+        }
+        &.refund {
+          background: rgba(255, 170, 0, 0.08);
+          color: #ffaa00;
+          border-color: rgba(255, 170, 0, 0.15);
+        }
+      }
+    }
+    
+    .row-arrow {
+      font-size: 14px;
+      color: #ccc;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.history-loading {
+  p {
+    font-size: 11px;
+    color: #999;
+    margin: 4px 0 0;
+  }
+}
+
+.empty-state {
+  .empty-icon {
+    font-size: 32px;
+    color: rgba(0, 0, 0, 0.12);
+    margin-bottom: 6px;
+  }
+  h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 750;
+    color: #333;
+  }
+  p {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: #777;
+  }
+}
+
+/* 4. Logout Section */
+.logout-container {
+  display: flex;
+  justify-content: center;
+  
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    border: 1px solid rgba(244, 67, 54, 0.15);
+    background: rgba(244, 67, 54, 0.06);
+    color: #F44336;
+    width: 100%;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    
+    span {
+      font-size: 13px;
+      font-weight: 750;
+    }
+    
+    .logout-icon {
+      font-size: 16px;
+    }
+    
+    &:active {
+      background: rgba(244, 67, 54, 0.12);
+      transform: scale(0.98);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* PACKAGE DETAIL MODAL (Matching Ledger style)       */
+/* ═══════════════════════════════════════════════════ */
+.search-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 6000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  
+  &.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
+.search-detail-modal {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(24px);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 12px 24px 34px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  .search-detail-backdrop.open & {
+    transform: translateY(0);
+  }
+  
+  .modal-drag-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+  
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    
+    .detail-carrier-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 850;
+      color: #fff;
+      text-transform: uppercase;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      
+      &.fedex { background: #4B2989; }
+      &.ups { background: #ffaa00; color: #111; }
+      &.amazon, &.amazon-logistics { background: #232f3e; }
+      &.usps { background: #3880FF; }
+      &.dhl, &.dhl-express { background: #F44336; }
+    }
+    
+    .detail-title {
+      flex: 1;
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 850;
+        color: #111;
+      }
+      span {
+        font-size: 11px;
+        font-weight: 700;
+        color: #EB8455;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .detail-close-btn {
+      background: rgba(0,0,0,0.04);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #666;
+      font-size: 18px;
+      
+      &:active {
+        background: rgba(0,0,0,0.08);
+      }
+    }
+  }
+  
+  .detail-tracking-hero {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 18px;
+    
+    .tracking-label {
+      font-size: 10px;
+      font-weight: 750;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .tracking-value {
+      font-size: 18px;
+      font-weight: 850;
+      color: #111;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  .detail-status-chips {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    
+    .dchip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 750;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      
+      ion-icon {
+        font-size: 14px;
+      }
+      
+      &.ok {
+        background: rgba(45, 211, 111, 0.08);
+        color: #2dd36f;
+        border-color: rgba(45, 211, 111, 0.15);
+      }
+      &.damage {
+        background: rgba(244, 67, 54, 0.08);
+        color: #F44336;
+        border-color: rgba(244, 67, 54, 0.15);
+      }
+      &.refund {
+        background: rgba(255, 170, 0, 0.08);
+        color: #ffaa00;
+        border-color: rgba(255, 170, 0, 0.15);
+      }
+    }
+  }
+  
+  .detail-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+    
+    .meta-cell {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-left: 36px;
+      
+      ion-icon {
+        position: absolute;
+        left: 12px;
+        top: 14px;
+        font-size: 16px;
+        color: #EB8455;
+      }
+      
+      span {
+        font-size: 9px;
+        font-weight: 700;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      
+      strong {
+        font-size: 12px;
+        font-weight: 750;
+        color: #111;
+        margin-top: 3px;
+      }
+    }
+  }
+  
+  .detail-done-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #EB8455 0%, #D45520 100%);
+    border: none;
+    padding: 13px;
+    border-radius: 14px;
+    color: #fff;
+    font-weight: 750;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(212, 85, 32, 0.25);
+    transition: all 0.2s ease;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}

@@ -1,0 +1,194 @@
+<ion-header class="ion-no-border transparent-header" [class.header-scrolled]="isScrolled">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <button class="liquid-header-circle" (click)="auth.openMenu()">
+        <ion-icon name="menu-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+    <ion-title class="premium-header-title">My Profile</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="liquid-header-circle" (click)="auth.openNotifications()">
+        <ion-icon name="notifications-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+
+  <div *ngIf="user">
+    <!-- 1. PERSONAL PROFILE CARD -->
+    <div class="my-profile-card liquid-glass ion-margin-bottom">
+      <div class="my-profile-left">
+        <div class="profile-avatar-ring">
+          <div class="avatar-text">{{ user.username.substring(0, 2).toUpperCase() }}</div>
+        </div>
+        <div class="my-profile-info">
+          <h3>{{ user.username }}</h3>
+          <p>{{ user.email }}</p>
+          <span class="profile-role-badge {{ user.role }}">{{ user.role }} Operator</span>
+        </div>
+      </div>
+      <div class="my-profile-right">
+        <ion-icon name="business-outline" class="wh-icon-sm"></ion-icon>
+        <span class="wh-name-sm">{{ user.warehouseName || 'Global' }}</span>
+        <span class="shift-dot"><span class="dot-live"></span> Active</span>
+      </div>
+    </div>
+
+    <!-- 2. PERSONAL TELEMETRY STATS GRID -->
+    <div class="personal-stats-grid ion-margin-bottom">
+      <div class="stat-box liquid-glass">
+        <strong class="stat-number orange">{{ stats.todayCount }}</strong>
+        <span class="stat-label">Today</span>
+      </div>
+      <div class="stat-box liquid-glass">
+        <strong class="stat-number">{{ stats.weekCount }}</strong>
+        <span class="stat-label">7 Days</span>
+      </div>
+      <div class="stat-box liquid-glass">
+        <strong class="stat-number">{{ stats.monthCount }}</strong>
+        <span class="stat-label">30 Days</span>
+      </div>
+    </div>
+
+    <!-- 3. PERSONAL LOG HISTORY -->
+    <div class="personal-history-card liquid-glass ion-padding ion-margin-bottom">
+      <div class="history-card-header">
+        <h4><ion-icon name="journal-outline" color="primary"></ion-icon> Personal Activity Log</h4>
+        <span class="history-count">{{ filteredPackages.length }} matches</span>
+      </div>
+
+      <!-- Search Input Row -->
+      <div class="profile-search-row ion-margin-top ion-margin-bottom">
+        <div class="profile-search-input-wrap">
+          <ion-icon name="search-outline" class="search-icon-sm"></ion-icon>
+          <input 
+            [value]="profileQuery" 
+            placeholder="Search my logged packages..." 
+            (input)="onSearchInput($any($event.target).value)"
+            class="profile-search-input"
+          />
+          <button class="search-clear-btn-sm" *ngIf="profileQuery" (click)="profileQuery = ''; applyFilter();">
+            <ion-icon name="close-circle" color="medium"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="history-divider"></div>
+
+      <!-- List -->
+      <div class="personal-history-list" *ngIf="!isLoadingHistory">
+        <!-- Empty State -->
+        <div class="empty-state ion-text-center ion-padding" *ngIf="filteredPackages.length === 0">
+          <ion-icon name="search-outline" class="empty-icon"></ion-icon>
+          <h3>No Packages Found</h3>
+          <p>No records match your query.</p>
+        </div>
+
+        <!-- Row list -->
+        <div class="history-item-row" *ngFor="let pkg of filteredPackages" (click)="openDetail(pkg)">
+          <div class="item-carrier-badge" [class]="pkg.carrier.toLowerCase().replace(' ', '-')">
+            {{ pkg.carrier.substring(0, 2) }}
+          </div>
+          <div class="item-details">
+            <strong class="item-tracking">{{ pkg.trackingNumber }}</strong>
+            <span class="item-time">
+              <ion-icon name="time-outline"></ion-icon> {{ pkg.receivedAt | date:'MMM d, h:mm a' }}
+            </span>
+          </div>
+          <div class="item-tags">
+            <span class="h-tag damage" *ngIf="getStatusFlags(pkg).isDamage">Damage</span>
+            <span class="h-tag refund" *ngIf="getStatusFlags(pkg).isRefund">Refund</span>
+            <span class="h-tag ok" *ngIf="getStatusFlags(pkg).isOk">OK</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="row-arrow"></ion-icon>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="history-loading ion-text-center ion-padding" *ngIf="isLoadingHistory">
+        <ion-spinner name="dots" color="primary"></ion-spinner>
+        <p>Loading personal log...</p>
+      </div>
+    </div>
+
+    <!-- 4. LOGOUT BUTTON -->
+    <div class="logout-container ion-margin-top ion-margin-bottom">
+      <button class="logout-btn liquid-glass" (click)="logout()">
+        <ion-icon name="log-out-outline" class="logout-icon"></ion-icon>
+        <span>Logout Account</span>
+      </button>
+    </div>
+
+  </div>
+
+</ion-content>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SEARCH RESULT DETAIL MODAL                         -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="search-detail-backdrop" [class.open]="selectedResult" (click)="closeDetail()">
+  <div class="search-detail-modal" *ngIf="selectedResult" (click)="$event.stopPropagation()">
+    <div class="modal-drag-handle"></div>
+
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="detail-carrier-badge" [class]="selectedResult.carrier.toLowerCase().replace(' ', '-')">
+        {{ selectedResult.carrier.substring(0, 2) }}
+      </div>
+      <div class="detail-title">
+        <h3>Package Detail</h3>
+        <span>{{ selectedResult.carrier }}</span>
+      </div>
+      <button class="detail-close-btn" (click)="closeDetail()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Tracking Hero -->
+    <div class="detail-tracking-hero">
+      <span class="tracking-label">Tracking Number</span>
+      <strong class="tracking-value">{{ selectedResult.trackingNumber }}</strong>
+    </div>
+
+    <!-- Status Chips -->
+    <div class="detail-status-chips">
+      <span class="dchip ok" *ngIf="getStatusFlags(selectedResult).isOk">
+        <ion-icon name="checkmark-circle-outline"></ion-icon> Normal
+      </span>
+      <span class="dchip damage" *ngIf="getStatusFlags(selectedResult).isDamage">
+        <ion-icon name="alert-circle-outline"></ion-icon> Damaged
+      </span>
+      <span class="dchip refund" *ngIf="getStatusFlags(selectedResult).isRefund">
+        <ion-icon name="arrow-undo-outline"></ion-icon> Refund
+      </span>
+    </div>
+
+    <!-- Meta Grid -->
+    <div class="detail-meta-grid">
+      <div class="meta-cell">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>Received</span>
+        <strong>{{ selectedResult.receivedAt | date:'MMM d, y' }}</strong>
+      </div>
+      <div class="meta-cell">
+        <ion-icon name="time-outline"></ion-icon>
+        <span>Time</span>
+        <strong>{{ selectedResult.receivedAt | date:'h:mm a' }}</strong>
+      </div>
+      <div class="meta-cell">
+        <ion-icon name="person-outline"></ion-icon>
+        <span>Operator</span>
+        <strong>{{ selectedResult.receivedBy }}</strong>
+      </div>
+      <div class="meta-cell">
+        <ion-icon name="business-outline"></ion-icon>
+        <span>Warehouse</span>
+        <strong>{{ selectedResult.warehouseName }}</strong>
+      </div>
+    </div>
+
+    <button class="detail-done-btn" (click)="closeDetail()">Done</button>
+  </div>
+</div>

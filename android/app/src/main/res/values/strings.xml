@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">delcargo</string>
+    <string name="title_activity_main">delcargo</string>
+    <string name="package_name">com.delcargo.app</string>
+    <string name="custom_url_scheme">com.delcargo.app</string>
+</resources>

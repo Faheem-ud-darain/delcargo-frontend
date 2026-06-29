@@ -1,0 +1,148 @@
+<ion-header class="ion-no-border transparent-header" [class.header-scrolled]="isScrolled">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <ion-button class="liquid-header-circle" (click)="goBack()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="premium-header-title">Staff Directory</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="liquid-header-circle" (click)="auth.openNotifications()">
+        <ion-icon name="notifications-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+
+  <!-- STAFF / MANAGER VIEW -->
+  <div *ngIf="user && user.role !== 'admin'">
+
+    <!-- Period Toggle -->
+    <div class="period-toggle-row ion-margin-bottom">
+      <span class="period-label">Receiving Overview:</span>
+      <div class="period-pills">
+        <button class="period-pill" [class.active]="selectedPeriod === 'day'" (click)="selectedPeriod = 'day'">Today</button>
+        <button class="period-pill" [class.active]="selectedPeriod === 'week'" (click)="selectedPeriod = 'week'">Week</button>
+        <button class="period-pill" [class.active]="selectedPeriod === 'month'" (click)="selectedPeriod = 'month'">Month</button>
+      </div>
+    </div>
+
+    <div class="staff-loading" *ngIf="isLoadingStaff">
+      <ion-spinner name="dots" color="primary"></ion-spinner>
+      <span>Loading team data...</span>
+    </div>
+
+    <div class="staff-directory-list" *ngIf="!isLoadingStaff">
+      <div class="dir-section-label">
+        <ion-icon name="people-outline"></ion-icon>
+        {{ user.warehouseName }} — {{ staffMembers.length }} Team Members
+      </div>
+
+      <div class="staff-dir-card liquid-glass" *ngFor="let s of staffMembers">
+        <div class="dir-card-left">
+          <div class="dir-avatar" [class.self]="s.user.username === user.username">
+            {{ s.user.username.substring(0, 2).toUpperCase() }}
+          </div>
+          <div class="dir-info">
+            <div class="dir-name-row">
+              <h4>{{ s.user.username }}</h4>
+              <span class="you-tag" *ngIf="s.user.username === user.username">You</span>
+            </div>
+            <p>{{ s.user.email }}</p>
+            <span class="dir-role-chip {{ s.user.role }}">{{ s.user.role }}</span>
+          </div>
+        </div>
+        <div class="dir-card-right">
+          <div class="dir-count-box" [class.zero]="getCountForPeriod(s) === 0">
+            <strong>{{ getCountForPeriod(s) }}</strong>
+            <span>{{ getPeriodLabel() }}</span>
+          </div>
+          <div class="dir-last-activity" *ngIf="s.lastActivity">
+            <ion-icon name="time-outline"></ion-icon>
+            {{ s.lastActivity | date:'MMM d, h:mm a' }}
+          </div>
+          <div class="dir-last-activity no-activity" *ngIf="!s.lastActivity">
+            <ion-icon name="time-outline"></ion-icon> No activity
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state ion-text-center ion-padding" *ngIf="staffMembers.length === 0">
+        <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+        <h3>No Teammates Found</h3>
+        <p>No other staff are assigned to your warehouse yet.</p>
+      </div>
+    </div>
+
+    <!-- Manager: Add User Form -->
+    <div class="add-user-card liquid-glass ion-padding ion-margin-top" *ngIf="user.role === 'manager'">
+      <h4><ion-icon name="person-add-outline" color="primary"></ion-icon> Register New Operator</h4>
+      <form (ngSubmit)="onCreateUser()" class="add-user-form">
+        <ion-item lines="none" class="glass-input-item">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-input [(ngModel)]="newUser.username" name="username" placeholder="Username" required></ion-input>
+        </ion-item>
+        <ion-item lines="none" class="glass-input-item">
+          <ion-icon name="mail-outline" slot="start"></ion-icon>
+          <ion-input [(ngModel)]="newUser.email" name="email" type="email" placeholder="Email Address" required></ion-input>
+        </ion-item>
+        <button type="submit" class="primary-liquid-button create-btn">Register Staff Member</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div *ngIf="user && user.role === 'admin'">
+    <div class="section-title ion-margin-bottom">
+      <h3>All Platform Users</h3>
+      <p>Add and manage operators across all global warehouses</p>
+    </div>
+
+    <div class="users-list-container">
+      <div class="user-item-card liquid-glass ion-padding ion-margin-bottom" *ngFor="let u of users">
+        <div class="user-item-content">
+          <div class="dir-avatar">{{ u.username.substring(0,2).toUpperCase() }}</div>
+          <div class="user-text">
+            <h4>{{ u.username }}</h4>
+            <p>{{ u.email }} &bull; <span class="role-text">{{ u.role }}</span></p>
+            <span class="wh-badge"><ion-icon name="business-outline"></ion-icon> {{ u.warehouseName || 'Global' }}</span>
+          </div>
+        </div>
+        <ion-button fill="clear" color="danger" *ngIf="u.id !== user.id && u.role !== 'admin'" (click)="deleteUser(u.id)">
+          <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <div class="add-user-card liquid-glass ion-padding ion-margin-top">
+      <h4><ion-icon name="person-add-outline" color="primary"></ion-icon> Register New Operator</h4>
+      <form (ngSubmit)="onCreateUser()" class="add-user-form">
+        <ion-item lines="none" class="glass-input-item">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-input [(ngModel)]="newUser.username" name="username" placeholder="Username" required></ion-input>
+        </ion-item>
+        <ion-item lines="none" class="glass-input-item">
+          <ion-icon name="mail-outline" slot="start"></ion-icon>
+          <ion-input [(ngModel)]="newUser.email" name="email" type="email" placeholder="Email Address" required></ion-input>
+        </ion-item>
+        <ion-item lines="none" class="glass-input-item">
+          <ion-icon name="business-outline" slot="start"></ion-icon>
+          <ion-select [(ngModel)]="newUser.warehouseId" name="warehouseId" placeholder="Select Warehouse" required>
+            <ion-select-option *ngFor="let wh of warehouses" [value]="wh.id">{{ wh.name }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item lines="none" class="glass-input-item">
+          <ion-icon name="ribbon-outline" slot="start"></ion-icon>
+          <ion-select [(ngModel)]="newUser.role" name="role" placeholder="Assign Role" required>
+            <ion-select-option value="user">Warehouse User</ion-select-option>
+            <ion-select-option value="manager">Warehouse Manager</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <button type="submit" class="primary-liquid-button create-btn">Register Staff Member</button>
+      </form>
+    </div>
+  </div>
+
+</ion-content>

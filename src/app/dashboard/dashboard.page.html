@@ -1,0 +1,135 @@
+<ion-header class="ion-no-border transparent-header" [class.header-scrolled]="isScrolled">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <button class="liquid-header-circle" (click)="auth.openMenu()">
+        <ion-icon name="menu-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+    <ion-title class="premium-header-title">Receive Packages</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="liquid-header-circle" (click)="auth.openNotifications()">
+        <ion-icon name="notifications-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+
+  <!-- Warehouse banner -->
+  <div class="warehouse-card liquid-glass ion-margin-bottom" *ngIf="user">
+    <div class="wh-info">
+      <ion-icon name="business-outline" class="wh-icon"></ion-icon>
+      <div>
+        <h2>{{ user.warehouseName || 'No Warehouse Assigned' }}</h2>
+        <p>Active Location &bull; {{ user.warehouseId || 'N/A' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin notice -->
+  <div *ngIf="user?.role === 'admin'" class="admin-warning liquid-glass ion-padding ion-text-center">
+    <ion-icon name="shield-outline" class="admin-warn-icon"></ion-icon>
+    <h3>Admin View Only</h3>
+    <p>Admin accounts have read-only cross-warehouse visibility. Data entry is restricted to Warehouse Users and Managers.</p>
+    <ion-button routerLink="/tabs/ledger" expand="block" class="primary-liquid-button">Go to Dashboard</ion-button>
+  </div>
+
+  <!-- Main content for operators -->
+  <div *ngIf="user && user.role !== 'admin'">
+
+    <!-- Quick stats -->
+    <div class="home-stats-row ion-margin-bottom">
+      <div class="home-stat-pill liquid-glass">
+        <ion-icon name="cube-outline" class="hstat-icon blue"></ion-icon>
+        <div class="hstat-content">
+          <strong>{{ dashboardStats.todayCount }}</strong>
+          <span>Today</span>
+        </div>
+      </div>
+      <div class="home-stat-pill liquid-glass">
+        <ion-icon name="alert-circle-outline" class="hstat-icon red"></ion-icon>
+        <div class="hstat-content">
+          <strong>{{ dashboardStats.damageCount }}</strong>
+          <span>Flagged</span>
+        </div>
+      </div>
+      <div class="home-stat-pill liquid-glass">
+        <ion-icon name="speedometer-outline" class="hstat-icon orange"></ion-icon>
+        <div class="hstat-content">
+          <strong>{{ dashboardStats.capacityUsed }}%</strong>
+          <span>Capacity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scan CTA -->
+    <div class="scan-cta-card liquid-glass ion-padding ion-margin-bottom ion-text-center">
+      <div class="scan-cta-icon-wrap">
+        <ion-icon name="qr-code-outline"></ion-icon>
+      </div>
+      <h2>Package Inbound System</h2>
+      <p *ngIf="!hasPendingBatch">Start a new receiving session — select a carrier, scan barcodes, and review.</p>
+      <p *ngIf="hasPendingBatch">You have an <strong>active batch session</strong> in progress. Resume or start fresh.</p>
+
+      <div class="cta-actions-row ion-margin-top">
+        <button class="primary-liquid-button start-btn" (click)="startScanning()">
+          <ion-icon [name]="hasPendingBatch ? 'play-forward-outline' : 'play-outline'"></ion-icon>
+          {{ hasPendingBatch ? 'Resume Session' : 'Start Scanning Session' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Today's received packages -->
+    <div class="today-section-card liquid-glass ion-margin-bottom">
+
+      <div class="today-header">
+        <div class="today-header-left">
+          <div class="today-dot-indicator"></div>
+          <div>
+            <h4>Today's Received Packages</h4>
+            <p>{{ today | date:'EEEE, MMMM d, y' }}</p>
+          </div>
+        </div>
+        <div class="today-count-badge">{{ dashboardStats.todayCount }}</div>
+      </div>
+
+      <div class="today-divider"></div>
+
+      <div class="today-empty" *ngIf="todayPackages.length === 0">
+        <ion-icon name="cube-outline"></ion-icon>
+        <p>No packages received yet today.</p>
+        <span>Start a scanning session above to begin.</span>
+      </div>
+
+      <div class="today-pkg-list" *ngIf="todayPackages.length > 0">
+        <div class="today-pkg-row" *ngFor="let pkg of todayPackages; let i = index">
+          <span class="today-pkg-index">{{ i + 1 }}</span>
+          <div class="today-carrier-dot" [class]="pkg.carrier.toLowerCase()">
+            {{ pkg.carrier.substring(0, 2) }}
+          </div>
+          <div class="today-pkg-details">
+            <span class="today-tracking">{{ pkg.trackingNumber }}</span>
+            <span class="today-time">
+              <ion-icon name="time-outline"></ion-icon>
+              {{ pkg.receivedAt | date:'h:mm a' }}
+            </span>
+          </div>
+          <div class="today-pkg-status">
+            <span class="today-condition-tag damage"  *ngIf="pkg.trackingNumber.includes('[DAMAGE]')"><ion-icon name="alert-circle-outline"></ion-icon> Damage</span>
+            <span class="today-condition-tag refund"  *ngIf="pkg.trackingNumber.includes('[REFUND]')"><ion-icon name="arrow-undo-outline"></ion-icon> Refund</span>
+            <span class="today-condition-tag add"     *ngIf="!pkg.trackingNumber.includes('[DAMAGE]') && !pkg.trackingNumber.includes('[REFUND]')"><ion-icon name="checkmark-circle-outline"></ion-icon> OK</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="today-footer-summary" *ngIf="todayPackages.length > 0">
+        <span><ion-icon name="checkmark-done-outline"></ion-icon> {{ dashboardStats.todayCount - dashboardStats.damageCount }} OK</span>
+        <span class="flagged" *ngIf="dashboardStats.damageCount > 0"><ion-icon name="warning-outline"></ion-icon> {{ dashboardStats.damageCount }} Flagged</span>
+        <span class="shift-label"><ion-icon name="person-outline"></ion-icon> {{ user.username }}</span>
+      </div>
+
+    </div>
+
+  </div>
+</ion-content>

@@ -1,0 +1,306 @@
+<ion-tabs (ionTabsDidChange)="setCurrentTab($event)">
+
+  <ion-tab-bar slot="bottom" class="liquid-glass-tabbar-wrapper">
+    <!-- Main nav pill containing standard tab buttons -->
+    <div class="liquid-nav-pill">
+      <ion-tab-button tab="dashboard" href="/tabs/dashboard">
+        <div class="nav-item-wrapper">
+          <ion-icon aria-hidden="true" [name]="activeTab === 'dashboard' ? 'home' : 'home-outline'"></ion-icon>
+          <ion-label>Home</ion-label>
+        </div>
+      </ion-tab-button>
+
+      <ion-tab-button tab="ledger" href="/tabs/ledger">
+        <div class="nav-item-wrapper">
+          <ion-icon aria-hidden="true" [name]="activeTab === 'ledger' ? 'list' : 'list-outline'"></ion-icon>
+          <ion-label>Ledger</ion-label>
+        </div>
+      </ion-tab-button>
+
+      <ion-tab-button tab="profile" href="/tabs/profile">
+        <div class="nav-item-wrapper">
+          <ion-icon aria-hidden="true" [name]="activeTab === 'profile' ? 'person' : 'person-outline'"></ion-icon>
+          <ion-label>Profile</ion-label>
+        </div>
+      </ion-tab-button>
+    </div>
+
+    <!-- Global Search Circle Button -->
+    <ion-tab-button (click)="openSearch(); $event.stopPropagation();" class="liquid-action-circle search-action-btn">
+      <ion-icon name="search"></ion-icon>
+    </ion-tab-button>
+  </ion-tab-bar>
+
+</ion-tabs>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- GLOBAL SMART SEARCH OVERLAY                        -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="global-search-overlay" [class.open]="searchOpen" (click)="closeSearch()">
+
+  <div class="search-sheet" (click)="$event.stopPropagation()">
+
+    <!-- Search Input Row -->
+    <div class="search-input-row">
+      <ion-icon name="search-outline" class="search-icon-left"></ion-icon>
+      <input
+        id="global-search-input"
+        type="text"
+        [value]="searchQuery"
+        (input)="onSearchInput($any($event.target).value)"
+        placeholder="Tracking no., carrier, operator, date..."
+        class="global-search-field"
+        autocomplete="off"
+      />
+      <button class="search-clear-btn" *ngIf="searchQuery" (click)="searchQuery = ''; searchResults = []; searchExecuted = false">
+        <ion-icon name="close-circle"></ion-icon>
+      </button>
+      <button class="search-cancel-btn" (click)="closeSearch()">Cancel</button>
+    </div>
+
+    <!-- Time Range Filter -->
+    <div class="time-filter-row">
+      <span class="time-filter-label">Time Frame</span>
+      <div class="time-filter-pills">
+        <button class="time-pill" [class.active]="selectedTimeFilter === 'all'" (click)="setTimeFilter('all')">All Time</button>
+        <button class="time-pill" [class.active]="selectedTimeFilter === '24h'" (click)="setTimeFilter('24h')">24 Hours</button>
+        <button class="time-pill" [class.active]="selectedTimeFilter === '7d'" (click)="setTimeFilter('7d')">7 Days</button>
+        <button class="time-pill" [class.active]="selectedTimeFilter === '30d'" (click)="setTimeFilter('30d')">1 Month</button>
+        <button class="time-pill" [class.active]="selectedTimeFilter === '1y'" (click)="setTimeFilter('1y')">1 Year</button>
+      </div>
+    </div>
+
+    <!-- Smart Suggestion Chips -->
+    <div class="suggestion-row" *ngIf="!searchExecuted">
+      <span class="suggestion-label">Quick Filters</span>
+      <div class="suggestion-chips">
+        <button class="suggestion-chip" *ngFor="let s of suggestions" (click)="applySuggestion(s.query)">
+          <ion-icon [name]="s.icon"></ion-icon>
+          {{ s.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Searching Spinner -->
+    <div class="search-loading" *ngIf="isSearching">
+      <ion-spinner name="dots" color="primary"></ion-spinner>
+      <span>Searching warehouse...</span>
+    </div>
+
+    <!-- Results List -->
+    <div class="search-results-list" *ngIf="searchExecuted && !isSearching">
+
+      <!-- No results -->
+      <div class="no-results" *ngIf="searchResults.length === 0">
+        <ion-icon name="search-outline"></ion-icon>
+        <p>No packages found for <strong>"{{ searchQuery }}"</strong></p>
+        <span>Try searching by tracking number, carrier, operator or date</span>
+      </div>
+
+      <!-- Result count -->
+      <div class="results-count" *ngIf="searchResults.length > 0">
+        <span>{{ searchResults.length }} result{{ searchResults.length === 1 ? '' : 's' }} for "{{ searchQuery }}"</span>
+      </div>
+
+      <!-- Result rows -->
+      <div class="search-result-row" *ngFor="let pkg of searchResults" (click)="openResult(pkg)">
+        <div class="result-carrier-dot" [class]="pkg.carrier.toLowerCase().replace(' ', '-')">
+          {{ pkg.carrier.substring(0, 2) }}
+        </div>
+        <div class="result-details">
+          <span class="result-tracking">{{ pkg.trackingNumber }}</span>
+          <span class="result-meta">
+            <ion-icon name="person-outline"></ion-icon> {{ pkg.receivedBy }}
+            &bull;
+            <ion-icon name="time-outline"></ion-icon> {{ pkg.receivedAt | date:'MMM d, h:mm a' }}
+          </span>
+        </div>
+        <div class="result-tags">
+          <span class="rtag damage" *ngIf="getStatusFlags(pkg).isDamage">Damage</span>
+          <span class="rtag refund" *ngIf="getStatusFlags(pkg).isRefund">Refund</span>
+          <span class="rtag ok" *ngIf="getStatusFlags(pkg).isOk">OK</span>
+        </div>
+        <ion-icon name="chevron-forward-outline" class="result-arrow"></ion-icon>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SEARCH RESULT DETAIL MODAL                         -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="search-detail-backdrop" [class.open]="selectedResult" (click)="closeResult()">
+  <div class="search-detail-modal" *ngIf="selectedResult" (click)="$event.stopPropagation()">
+    <div class="modal-drag-handle"></div>
+
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="detail-carrier-badge" [class]="selectedResult.carrier.toLowerCase().replace(' ', '-')">
+        {{ selectedResult.carrier.substring(0, 2) }}
+      </div>
+      <div class="detail-title">
+        <h3>Package Detail</h3>
+        <span>{{ selectedResult.carrier }}</span>
+      </div>
+      <button class="detail-close-btn" (click)="closeResult()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Tracking Hero -->
+    <div class="detail-tracking-hero">
+      <span class="tracking-label">Tracking Number</span>
+      <strong class="tracking-value">{{ selectedResult.trackingNumber }}</strong>
+    </div>
+
+    <!-- Status Chips -->
+    <div class="detail-status-chips">
+      <span class="dchip ok" *ngIf="getStatusFlags(selectedResult).isOk">
+        <ion-icon name="checkmark-circle-outline"></ion-icon> Normal
+      </span>
+      <span class="dchip damage" *ngIf="getStatusFlags(selectedResult).isDamage">
+        <ion-icon name="alert-circle-outline"></ion-icon> Damaged
+      </span>
+      <span class="dchip refund" *ngIf="getStatusFlags(selectedResult).isRefund">
+        <ion-icon name="arrow-undo-outline"></ion-icon> Refund
+      </span>
+    </div>
+
+    <!-- Meta Grid -->
+    <div class="detail-meta-grid">
+      <div class="meta-cell">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>Received</span>
+        <strong>{{ selectedResult.receivedAt | date:'MMM d, y' }}</strong>
+      </div>
+      <div class="meta-cell">
+        <ion-icon name="time-outline"></ion-icon>
+        <span>Time</span>
+        <strong>{{ selectedResult.receivedAt | date:'h:mm a' }}</strong>
+      </div>
+      <div class="meta-cell">
+        <ion-icon name="person-outline"></ion-icon>
+        <span>Operator</span>
+        <strong>{{ selectedResult.receivedBy }}</strong>
+      </div>
+      <div class="meta-cell">
+        <ion-icon name="business-outline"></ion-icon>
+        <span>Warehouse</span>
+        <strong>{{ selectedResult.warehouseName }}</strong>
+      </div>
+    </div>
+
+    <button class="detail-done-btn" (click)="closeResult()">Done</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- GLOBAL NOTIFICATIONS OVERLAY                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="global-notifications-overlay" [class.open]="notificationsOpen" [class.closing]="notificationsClosing" (click)="closeNotifications()">
+  <div class="notifications-sheet" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="notifications-header">
+      <div class="header-left">
+        <ion-icon name="notifications-outline" class="bell-icon"></ion-icon>
+        <div>
+          <h3>Activity Alerts</h3>
+          <span>Recent warehouse events</span>
+        </div>
+      </div>
+      <button class="notif-close-btn" (click)="closeNotifications()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="notif-divider"></div>
+
+    <!-- Notification List -->
+    <div class="notifications-list">
+      <div class="notif-row-item" *ngFor="let notif of mockNotifications" [class]="notif.type">
+        <div class="notif-icon-box">
+          <ion-icon [name]="notif.icon"></ion-icon>
+        </div>
+        <div class="notif-details">
+          <div class="notif-title-row">
+            <h4>{{ notif.title }}</h4>
+            <span class="notif-time">{{ notif.time }}</span>
+          </div>
+          <p>{{ notif.body }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- GLOBAL CUSTOM HAMBURGER MENU OVERLAY               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="global-menu-overlay" [class.open]="menuOpen" [class.closing]="menuClosing" (click)="closeMenu()">
+  <div class="menu-sheet" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="menu-header">
+      <div class="header-left">
+        <ion-icon name="menu-outline" class="menu-title-icon"></ion-icon>
+        <div>
+          <h3>Portal Menu</h3>
+          <span>Main Navigation</span>
+        </div>
+      </div>
+      <button class="menu-close-btn" (click)="closeMenu()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="menu-divider-bar"></div>
+
+    <div class="menu-sheet-content" *ngIf="user">
+      <!-- User Profile Card -->
+      <div class="menu-profile-card liquid-glass ion-padding ion-margin-bottom">
+        <div class="avatar-box">
+          <ion-icon name="person-outline"></ion-icon>
+        </div>
+        <div class="profile-info">
+          <h4>{{ user.username }}</h4>
+          <p>{{ user.email }}</p>
+          <span class="role-badge">{{ user.role }}</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <div class="menu-links-list">
+        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/dashboard')">
+          <ion-icon name="camera-outline"></ion-icon>
+          <span>Receive Packages</span>
+        </button>
+        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/ledger')">
+          <ion-icon name="list-outline"></ion-icon>
+          <span>Activity Ledger</span>
+        </button>
+        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/profile')">
+          <ion-icon name="person-outline"></ion-icon>
+          <span>My Profile</span>
+        </button>
+        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/staff')">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>Staff Directory</span>
+        </button>
+      </div>
+
+      <!-- Spacer pushes logout to bottom -->
+      <div class="menu-flex-spacer"></div>
+
+      <!-- Divider -->
+      <div class="menu-divider-bar"></div>
+
+      <!-- Logout -->
+      <button class="menu-logout-btn" (click)="logout()">
+        <ion-icon name="log-out-outline" color="danger"></ion-icon>
+        <span color="danger">Log Out</span>
+      </button>
+    </div>
+  </div>
+</div>

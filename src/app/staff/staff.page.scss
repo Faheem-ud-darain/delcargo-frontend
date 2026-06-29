@@ -1,0 +1,63 @@
+.content-bg {
+  --background: radial-gradient(circle at 10% 20%, rgba(255, 240, 230, 0.4) 0%, rgba(246, 248, 251, 1) 90%);
+}
+
+.period-toggle-row {
+  display: flex; align-items: center; gap: 10px;
+  .period-label { font-size: 12px; font-weight: 700; color: #666; white-space: nowrap; }
+  .period-pills { display: flex; gap: 6px;
+    .period-pill { font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.6); color: #666; cursor: pointer; transition: all 0.2s ease;
+      &.active { background: rgba(235,132,85,0.12); border-color: rgba(235,132,85,0.3); color: #D45520; }
+    }
+  }
+}
+
+.staff-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 24px; span { font-size: 12px; color: #888; } }
+
+.dir-section-label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 750; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; ion-icon { font-size: 14px; } }
+
+.staff-directory-list { display: flex; flex-direction: column; gap: 10px; }
+
+.staff-dir-card {
+  display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 16px;
+  .dir-card-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+    .dir-avatar { width: 42px; height: 42px; border-radius: 14px; background: rgba(0,0,0,0.06); color: #555; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.06);
+      &.self { background: rgba(235,132,85,0.12); color: #D45520; border-color: rgba(235,132,85,0.25); }
+    }
+    .dir-info {
+      .dir-name-row { display: flex; align-items: center; gap: 6px;
+        h4 { margin: 0; font-size: 13px; font-weight: 800; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .you-tag { font-size: 9px; font-weight: 750; background: rgba(235,132,85,0.1); color: #D45520; padding: 1px 6px; border-radius: 20px; border: 1px solid rgba(235,132,85,0.2); white-space: nowrap; }
+      }
+      p { margin: 2px 0 4px; font-size: 10px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .dir-role-chip { font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 20px;
+        &.user { background: rgba(56,128,255,0.08); color: #3880FF; border: 1px solid rgba(56,128,255,0.15); }
+        &.manager { background: rgba(235,132,85,0.08); color: #D45520; border: 1px solid rgba(235,132,85,0.2); }
+        &.admin { background: rgba(0,0,0,0.06); color: #333; border: 1px solid rgba(0,0,0,0.1); }
+      }
+    }
+  }
+  .dir-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; margin-left: 10px;
+    .dir-count-box { display: flex; flex-direction: column; align-items: center; background: rgba(235,132,85,0.1); border: 1px solid rgba(235,132,85,0.2); border-radius: 12px; padding: 6px 12px; min-width: 52px;
+      strong { font-size: 18px; font-weight: 850; color: #D45520; line-height: 1; }
+      span { font-size: 8px; font-weight: 700; color: #EB8455; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+      &.zero { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); strong { color: #bbb; } span { color: #ccc; } }
+    }
+    .dir-last-activity { font-size: 9px; color: #aaa; font-weight: 500; display: flex; align-items: center; gap: 3px; ion-icon { font-size: 10px; } &.no-activity { color: #ddd; } }
+  }
+}
+
+.section-title { margin-bottom: 16px; h3 { margin: 0 0 4px; font-size: 17px; font-weight: 800; color: #111; } p { margin: 0; font-size: 12px; color: #666; } }
+.users-list-container { display: flex; flex-direction: column; }
+.user-item-card { display: flex; align-items: center; justify-content: space-between;
+  .user-item-content { display: flex; align-items: center; gap: 12px; flex: 1;
+    .dir-avatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(235,132,85,0.08); color: #EB8455; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+    .user-text { flex: 1; min-width: 0; h4 { margin: 0; font-size: 14px; font-weight: 750; color: #111; } p { margin: 2px 0 4px; font-size: 11px; color: #666; } .role-text { font-weight: 700; color: #EB8455; text-transform: capitalize; } .wh-badge { font-size: 10px; color: #888; display: flex; align-items: center; gap: 3px; ion-icon { font-size: 12px; } } }
+  }
+}
+.add-user-card { border-radius: 18px; h4 { margin: 0 0 16px; font-size: 14px; font-weight: 750; display: flex; align-items: center; gap: 6px; } }
+.add-user-form { display: flex; flex-direction: column; gap: 10px; }
+.glass-input-item { --background: rgba(255,255,255,0.8); --border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); margin-bottom: 0; ion-icon { color: #EB8455; margin-right: 6px; } ion-input, ion-select { font-size: 14px; font-weight: 500; } }
+.create-btn { width: 100%; padding: 13px; margin-top: 6px; }
+.primary-liquid-button { background: linear-gradient(135deg, #EB8455 0%, #D45520 100%); border: none; color: #fff; font-weight: 750; border-radius: 14px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; &:active { transform: scale(0.98); } }
+.empty-state { .empty-icon { font-size: 48px; color: rgba(0,0,0,0.15); margin-bottom: 8px; } h3 { margin: 0; font-weight: 700; } p { color: #666; margin: 4px 0 0; font-size: 13px; } }

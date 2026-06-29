@@ -1,0 +1,492 @@
+<ion-header class="ion-no-border transparent-header" [class.header-scrolled]="isScrolled">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <button class="liquid-header-circle" (click)="auth.openMenu()">
+        <ion-icon name="menu-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+    <ion-title class="premium-header-title">{{ user?.role === 'admin' ? 'Admin Dashboard' : 'Package Ledger' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="liquid-header-circle" (click)="auth.openNotifications()">
+        <ion-icon name="notifications-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+
+  <!-- ============================================== -->
+  <!-- 1. ADMIN WAREHOUSE OVERVIEW PANEL              -->
+  <!-- ============================================== -->
+  <div *ngIf="user?.role === 'admin' && !selectedWarehouseId">
+    <div class="section-title ion-margin-bottom">
+      <h3>Active Warehouse Nodes</h3>
+      <p>Real-time telemetry and package indexing status per location</p>
+    </div>
+
+    <!-- Warehouse Grid Cards -->
+    <div class="warehouses-grid ion-margin-bottom">
+      <div 
+        class="warehouse-node-card liquid-glass ion-padding" 
+        *ngFor="let wh of warehouses"
+        (click)="selectWarehouse(wh)"
+      >
+        <div class="node-header">
+          <div class="node-title-box">
+            <ion-icon name="business" class="node-icon"></ion-icon>
+            <div>
+              <h4>{{ wh.name }}</h4>
+              <p>{{ wh.location }}</p>
+            </div>
+          </div>
+          <span class="node-code">{{ wh.id }}</span>
+        </div>
+
+        <div class="node-stats">
+          <div class="n-stat">
+            <strong>{{ warehouseStats[wh.id]?.live ?? 0 }}</strong>
+            <span>Live Packages</span>
+          </div>
+          <div class="n-stat">
+            <strong>{{ warehouseStats[wh.id]?.operators ?? 0 }}</strong>
+            <span>On-Duty</span>
+          </div>
+          <div class="n-stat">
+            <strong>{{ warehouseStats[wh.id]?.archive ?? 0 }}</strong>
+            <span>Archived</span>
+          </div>
+        </div>
+
+        <div class="node-footer" *ngIf="warehouseStats[wh.id]">
+          <ion-icon name="pulse-outline" class="pulse-icon"></ion-icon>
+          <span>Latest: {{ warehouseStats[wh.id]?.lastActivity || 'No Activity' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 2. ADMIN SELECTED WAREHOUSE DETAILED HISTORY  -->
+  <!-- ============================================== -->
+  <div *ngIf="user?.role === 'admin' && selectedWarehouseId && selectedWarehouse">
+    <button class="back-overview-btn liquid-glass ion-margin-bottom" (click)="clearWarehouseSelection()">
+      <ion-icon name="arrow-back-outline"></ion-icon> Back to Global Overview
+    </button>
+
+    <div class="selected-wh-header liquid-glass ion-padding ion-margin-bottom">
+      <div class="wh-title-row">
+        <ion-icon name="business-outline" class="wh-large-icon"></ion-icon>
+        <div>
+          <h2>{{ selectedWarehouse.name }}</h2>
+          <p>{{ selectedWarehouse.location }} &bull; Node ID: <strong>{{ selectedWarehouse.id }}</strong></p>
+        </div>
+      </div>
+
+      <div class="wh-meta-stats ion-margin-top">
+        <div class="meta-stat-item">
+          <ion-icon name="cube-outline"></ion-icon>
+          <div>
+            <strong>{{ warehouseStats[selectedWarehouse.id]?.live ?? 0 }}</strong>
+            <span>Active Packages</span>
+          </div>
+        </div>
+        <div class="meta-stat-item">
+          <ion-icon name="archive-outline"></ion-icon>
+          <div>
+            <strong>{{ warehouseStats[selectedWarehouse.id]?.archive ?? 0 }}</strong>
+            <span>Cold Storage</span>
+          </div>
+        </div>
+        <div class="meta-stat-item">
+          <ion-icon name="people-outline"></ion-icon>
+          <div>
+            <strong>{{ warehouseStats[selectedWarehouse.id]?.operators ?? 0 }}</strong>
+            <span>Registered Staff</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Staff at this location -->
+    <div class="wh-staff-section liquid-glass ion-padding ion-margin-bottom" *ngIf="selectedWarehouseUsers.length > 0">
+      <h4><ion-icon name="people-outline" color="primary"></ion-icon> On-Site Operators</h4>
+      <div class="staff-bubbles-row">
+        <div class="staff-bubble-card" *ngFor="let staff of selectedWarehouseUsers">
+          <div class="staff-avatar">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <span>{{ staff.username }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ledger / history of this warehouse specifically -->
+    <div class="section-title ion-margin-bottom">
+      <h3>Warehouse Activity History</h3>
+      <p>Showing all packages logged by node staff. Click any entry to inspect metadata.</p>
+    </div>
+
+    <div class="package-list">
+      <div class="empty-state ion-text-center ion-padding" *ngIf="selectedWarehousePackages.length === 0">
+        <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
+        <h3>No Packages Found</h3>
+        <p>No transactions registered for this node yet.</p>
+      </div>
+
+      <div 
+        class="package-card liquid-glass ion-padding ion-margin-bottom" 
+        *ngFor="let pkg of selectedWarehousePackages"
+        (click)="openDetail(pkg)"
+      >
+        <div class="pkg-header">
+          <span class="carrier-badge" [class]="pkg.carrier.toLowerCase()">{{ pkg.carrier }}</span>
+          <span class="pkg-date">{{ pkg.receivedAt | date:'MMM d, y, h:mm a' }}</span>
+        </div>
+        <div class="pkg-body">
+          <h3 class="tracking-title">{{ pkg.trackingNumber }}</h3>
+          <p class="pkg-meta">
+            <ion-icon name="person-outline"></ion-icon> Scanned by: <strong>{{ pkg.receivedBy }}</strong>
+          </p>
+        </div>
+        <div class="pkg-footer" *ngIf="pkg.deliveryCountPhotos.length > 0">
+          <ion-chip class="count-badge">
+            <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+            <ion-label>Count Verified ({{ pkg.deliveryCountPhotos.length }} photo(s))</ion-label>
+          </ion-chip>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 3. STANDARD USER / STAFF LEDGER VIEW          -->
+  <!-- ============================================== -->
+  <div *ngIf="user?.role !== 'admin'">
+
+    <!-- Stats Section -->
+    <div class="stats-grid ion-margin-bottom" *ngIf="user">
+      <div class="stat-card liquid-glass">
+        <div class="stat-icon-wrapper blue">
+          <ion-icon name="cube-outline"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.liveCount }}</h3>
+          <p>Live Packages (0-3m)</p>
+        </div>
+      </div>
+
+      <div class="stat-card liquid-glass">
+        <div class="stat-icon-wrapper orange">
+          <ion-icon name="archive-outline"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <h3>{{ stats.archiveCount }}</h3>
+          <p>Archived (3-6m)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Charts Section -->
+    <div class="dashboard-charts-grid ion-margin-bottom">
+      <!-- Incoming Chart -->
+      <div class="chart-card liquid-glass ion-padding">
+        <h4><ion-icon name="trending-up-outline" color="primary"></ion-icon> Incoming Carriers</h4>
+        <div class="horizontal-bars">
+          <div class="bar-row">
+            <span class="bar-label">FedEx</span>
+            <div class="bar-track"><div class="bar-fill fedex" style="width: 65%"></div></div>
+            <span class="bar-val">65%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">UPS</span>
+            <div class="bar-track"><div class="bar-fill ups" style="width: 48%"></div></div>
+            <span class="bar-val">48%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Amazon</span>
+            <div class="bar-track"><div class="bar-fill amazon" style="width: 80%"></div></div>
+            <span class="bar-val">80%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receivings Bar Chart -->
+      <div class="chart-card liquid-glass ion-padding">
+        <h4><ion-icon name="checkmark-done-outline" color="success"></ion-icon> Daily Processed</h4>
+        <div class="vertical-bars">
+          <div class="v-bar-col">
+            <div class="v-bar-fill" style="height: 40%"></div>
+            <span class="v-bar-label">M</span>
+          </div>
+          <div class="v-bar-col">
+            <div class="v-bar-fill" style="height: 75%"></div>
+            <span class="v-bar-label">T</span>
+          </div>
+          <div class="v-bar-col">
+            <div class="v-bar-fill" style="height: 90%"></div>
+            <span class="v-bar-label">W</span>
+          </div>
+          <div class="v-bar-col">
+            <div class="v-bar-fill" style="height: 55%"></div>
+            <span class="v-bar-label">T</span>
+          </div>
+          <div class="v-bar-col">
+            <div class="v-bar-fill" style="height: 85%"></div>
+            <span class="v-bar-label">F</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outgoing Ring Chart -->
+      <div class="chart-card liquid-glass ion-padding">
+        <h4><ion-icon name="airplane-outline" color="warning"></ion-icon> Dispatch Clearance</h4>
+        <div class="ring-chart-box">
+          <svg class="progress-ring" width="80" height="80">
+            <circle class="progress-ring__background" stroke="rgba(0,0,0,0.05)" stroke-width="8" fill="transparent" r="32" cx="40" cy="40"/>
+            <circle class="progress-ring__circle" stroke="#EB8455" stroke-width="8" stroke-dasharray="201.06" stroke-dashoffset="50.26" fill="transparent" r="32" cx="40" cy="40"/>
+          </svg>
+          <div class="ring-center-text">
+            <strong>75%</strong>
+            <span>Ready</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- UNIFIED SEARCH LEDGER CARD                    -->
+    <!-- ============================================== -->
+    <div class="unified-ledger-card liquid-glass ion-margin-bottom">
+      
+      <!-- Card Header -->
+      <div class="ledger-card-header">
+        <div class="ledger-header-left">
+          <ion-icon name="funnel" class="ledger-header-icon"></ion-icon>
+          <div>
+            <h4>Search Ledger</h4>
+            <p>{{ packages.length }} package{{ packages.length !== 1 ? 's' : '' }} found</p>
+          </div>
+        </div>
+        <button class="view-all-btn" (click)="toggleShowAll()">
+          <ion-icon [name]="showAll ? 'chevron-up-outline' : 'list-outline'"></ion-icon>
+          {{ showAll ? 'Collapse' : 'View Full History' }}
+        </button>
+      </div>
+
+      <!-- Search Input Row -->
+      <div class="ledger-search-row">
+        <div class="ledger-search-input-wrap">
+          <ion-icon name="search-outline" class="search-icon-sm"></ion-icon>
+          <ion-input 
+            [(ngModel)]="filters.query" 
+            placeholder="Search by tracking, carrier, operator..." 
+            (ionInput)="onFilterChange()"
+            debounce="300"
+            class="ledger-search-input"
+          ></ion-input>
+          <ion-button fill="clear" size="small" *ngIf="filters.query" (click)="filters.query = ''; onFilterChange();" class="search-clear-btn-sm">
+            <ion-icon name="close-circle" slot="icon-only" color="medium"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+
+      <!-- Filter Controls Row -->
+      <div class="ledger-filters-row">
+        <!-- Carrier Select -->
+        <div class="ledger-filter-chip-wrap">
+          <ion-icon name="trail-sign-outline" class="filter-chip-icon"></ion-icon>
+          <ion-select 
+            [(ngModel)]="filters.carrier" 
+            placeholder="All Carriers" 
+            (ionChange)="onFilterChange()"
+            class="filter-select-inline"
+            interface="popover"
+          >
+            <ion-select-option value="">All Carriers</ion-select-option>
+            <ion-select-option value="FedEx">FedEx</ion-select-option>
+            <ion-select-option value="UPS">UPS</ion-select-option>
+            <ion-select-option value="Amazon">Amazon</ion-select-option>
+            <ion-select-option value="USPS">USPS</ion-select-option>
+            <ion-select-option value="DHL">DHL</ion-select-option>
+          </ion-select>
+        </div>
+
+        <!-- Archive Toggle -->
+        <div class="ledger-archive-toggle">
+          <span class="archive-label">Archived</span>
+          <ion-toggle 
+            color="primary" 
+            [(ngModel)]="filters.includeArchive" 
+            (ionChange)="onFilterChange()"
+            class="archive-toggle-sm"
+          ></ion-toggle>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="ledger-divider"></div>
+
+      <!-- Loading State -->
+      <div class="ledger-loading" *ngIf="isLoading">
+        <ion-spinner name="dots" color="primary"></ion-spinner>
+        <span>{{ filters.includeArchive ? 'Querying archive...' : 'Fetching packages...' }}</span>
+      </div>
+
+      <!-- Empty State -->
+      <div class="ledger-empty" *ngIf="!isLoading && packages.length === 0">
+        <ion-icon name="cube-outline"></ion-icon>
+        <p>No packages found. Try adjusting your filters.</p>
+      </div>
+
+      <!-- Package List inside card -->
+      <div class="ledger-package-list" *ngIf="!isLoading && packages.length > 0">
+        <!-- Show preview (3 items) or all based on showAll -->
+        <div 
+          class="ledger-pkg-row" 
+          *ngFor="let pkg of (showAll ? packages : packages.slice(0, 3)); let i = index"
+          (click)="openDetail(pkg)"
+        >
+          <!-- Carrier Logo -->
+          <div class="ledger-carrier-dot" [class]="pkg.carrier.toLowerCase()">
+            {{ pkg.carrier.substring(0, 2) }}
+          </div>
+
+          <!-- Package Info -->
+          <div class="ledger-pkg-info">
+            <span class="ledger-tracking">{{ pkg.trackingNumber }}</span>
+            <span class="ledger-meta">
+              <ion-icon name="location-outline"></ion-icon>
+              {{ pkg.warehouseName }} &bull; {{ pkg.receivedBy }}
+            </span>
+          </div>
+
+          <!-- Right Side -->
+          <div class="ledger-pkg-right">
+            <span class="ledger-carrier-tag" [class]="pkg.carrier.toLowerCase()">{{ pkg.carrier }}</span>
+            <span class="ledger-date">{{ pkg.receivedAt | date:'MMM d, h:mm a' }}</span>
+            <ion-icon name="chevron-forward-outline" class="ledger-arrow"></ion-icon>
+          </div>
+        </div>
+
+        <!-- Show More / Collapse footer -->
+        <div class="ledger-show-more" *ngIf="packages.length > 3">
+          <button class="show-more-btn" (click)="toggleShowAll()">
+            <ion-icon [name]="showAll ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+            {{ showAll ? 'Show Less' : 'View All ' + packages.length + ' Packages' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ============================================== -->
+  <!-- PACKAGE DETAIL MODAL                          -->
+  <!-- ============================================== -->
+  <div class="detail-backdrop" *ngIf="selectedPackage" (click)="closeDetail()">
+    <div class="detail-modal liquid-glass" (click)="$event.stopPropagation()">
+      
+      <!-- Modal Handle -->
+      <div class="modal-handle-bar"></div>
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-carrier-badge" [class]="selectedPackage.carrier.toLowerCase()">
+            {{ selectedPackage.carrier.substring(0, 2) }}
+          </div>
+          <div>
+            <h3>Package Details</h3>
+            <span class="modal-carrier-label" [class]="'carrier-badge ' + selectedPackage.carrier.toLowerCase()">
+              {{ selectedPackage.carrier }}
+            </span>
+          </div>
+        </div>
+        <button class="modal-close-btn" (click)="closeDetail()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="modal-scroll-body">
+
+        <!-- Tracking Number Hero -->
+        <div class="modal-tracking-hero">
+          <span class="modal-tracking-label">TRACKING NUMBER</span>
+          <div class="modal-tracking-val">{{ selectedPackage.trackingNumber }}</div>
+        </div>
+
+        <!-- Status Badges (condition tags) -->
+        <div class="modal-status-row">
+          <div class="status-chip normal">
+            <ion-icon name="checkmark-circle-outline"></ion-icon> Normal
+          </div>
+          <div class="status-chip verified" *ngIf="selectedPackage.deliveryCountPhotos.length > 0">
+            <ion-icon name="camera-outline"></ion-icon> Count Verified
+          </div>
+        </div>
+
+        <!-- Meta Grid -->
+        <div class="modal-meta-grid">
+          <div class="modal-meta-item">
+            <span class="meta-label">RECEIVED AT</span>
+            <span class="meta-val">{{ selectedPackage.receivedAt | date:'MMM d, y' }}</span>
+            <span class="meta-sub">{{ selectedPackage.receivedAt | date:'h:mm a' }}</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="meta-label">OPERATOR</span>
+            <span class="meta-val">{{ selectedPackage.receivedBy }}</span>
+            <span class="meta-sub">Staff</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="meta-label">LOCATION</span>
+            <span class="meta-val">{{ selectedPackage.warehouseName }}</span>
+            <span class="meta-sub">{{ selectedPackage.warehouseId }}</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="meta-label">CARRIER</span>
+            <span class="meta-val">{{ selectedPackage.carrier }}</span>
+            <span class="meta-sub">Shipping Partner</span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="modal-section-divider">
+          <span>Label & Photos</span>
+        </div>
+
+        <!-- Label Image -->
+        <div class="modal-img-section">
+          <span class="modal-img-label">SHIPPING LABEL (AUTO-ORIENTED)</span>
+          <div class="modal-img-box">
+            <img [src]="selectedPackage.labelPhoto" alt="Shipping label" />
+          </div>
+        </div>
+
+        <!-- Count Photos -->
+        <div class="modal-img-section" *ngIf="selectedPackage.deliveryCountPhotos.length > 0">
+          <span class="modal-img-label">CARRIER DEVICE COUNT PHOTOS ({{ selectedPackage.deliveryCountPhotos.length }})</span>
+          <div class="modal-photos-grid">
+            <img 
+              *ngFor="let photo of selectedPackage.deliveryCountPhotos" 
+              [src]="photo" 
+              alt="Carrier handheld count screen" 
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="modal-close-full-btn" (click)="closeDetail()">
+          <ion-icon name="checkmark-outline"></ion-icon> Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</ion-content>
