@@ -64,10 +64,31 @@
     color: #EB8455;
     margin-right: 8px;
   }
-  
+
   ion-input {
     font-size: 15px;
     --placeholder-color: #888;
+  }
+
+  .password-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 18px;
+
+    ion-icon {
+      pointer-events: none;
+    }
+
+    &:active {
+      color: #EB8455;
+    }
   }
 }
 
@@ -97,69 +118,3 @@
   cursor: pointer;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: #888;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 16px;
-  
-  &::before, &::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  }
-  
-  span {
-    padding: 0 10px;
-  }
-}
-
-.quick-btn-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.quick-login-btn {
-  display: flex;
-  align-items: center;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover, &:active {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: #EB8455;
-    box-shadow: 0 4px 12px rgba(235, 132, 85, 0.1);
-  }
-  
-  ion-icon {
-    font-size: 20px;
-    color: #EB8455;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-  
-  div {
-    display: flex;
-    flex-direction: column;
-    
-    strong {
-      font-size: 13px;
-      color: #222;
-    }
-    
-    span {
-      font-size: 11px;
-      color: #666;
-    }
-  }
-}

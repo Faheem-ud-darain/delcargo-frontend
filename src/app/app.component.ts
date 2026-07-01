@@ -37,6 +37,15 @@ export class AppComponent implements OnInit {
     this.menuOpen = false;
   }
 
+  getInitials(username: string): string {
+    if (!username) return 'DC';
+    const parts = username.split(/[_\s.-]+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return username.substring(0, 2).toUpperCase();
+  }
+
   logout() {
     this.menuCtrl.close('main-menu').then(() => {
       this.auth.logout();

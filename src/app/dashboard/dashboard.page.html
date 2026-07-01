@@ -16,8 +16,8 @@
 
 <ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
 
-  <!-- Warehouse banner -->
-  <div class="warehouse-card liquid-glass ion-margin-bottom" *ngIf="user">
+  <!-- Warehouse banner (Hidden for Admin, shown for Manager/User to display location) -->
+  <div class="warehouse-card liquid-glass ion-margin-bottom" *ngIf="user && user.role !== 'admin'">
     <div class="wh-info">
       <ion-icon name="business-outline" class="wh-icon"></ion-icon>
       <div>
@@ -27,12 +27,128 @@
     </div>
   </div>
 
-  <!-- Admin notice -->
-  <div *ngIf="user?.role === 'admin'" class="admin-warning liquid-glass ion-padding ion-text-center">
-    <ion-icon name="shield-outline" class="admin-warn-icon"></ion-icon>
-    <h3>Admin View Only</h3>
-    <p>Admin accounts have read-only cross-warehouse visibility. Data entry is restricted to Warehouse Users and Managers.</p>
-    <ion-button routerLink="/tabs/ledger" expand="block" class="primary-liquid-button">Go to Dashboard</ion-button>
+  <!-- ============================================== -->
+  <!-- ADMIN & MANAGER DASHBOARD (CHARTS & LOGINS)    -->
+  <!-- ============================================== -->
+  <div *ngIf="user && (user.role === 'admin' || user.role === 'manager')">
+
+    <div class="section-title ion-margin-bottom">
+      <h3 style="text-transform: capitalize;">{{ user.role }} Telemetry Control Center</h3>
+      <p *ngIf="user.role === 'admin'">Real-time logs, receiving metrics, and user sign-in analytics across all nodes</p>
+      <p *ngIf="user.role === 'manager'">Real-time logs and receiving metrics for {{ user.warehouseName }}</p>
+    </div>
+
+    <!-- CHARTS GRID -->
+    <div class="dashboard-charts-grid ion-margin-bottom">
+      
+      <!-- Daily Scans Animated Bar Chart -->
+      <div class="chart-card liquid-glass ion-padding">
+        <h4>
+          <ion-icon name="trending-up-outline" color="primary"></ion-icon> 
+          Receiving Activity (Last 5 Days)
+        </h4>
+        <div class="vertical-bars" style="margin-top: 20px; display: flex; justify-content: space-around; align-items: flex-end; height: 120px;">
+          <div class="v-bar-col" *ngFor="let day of dailyScansChart" style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+            <span class="bar-val-label" style="font-size: 11px; font-weight: 700; color: var(--ion-color-primary); margin-bottom: 4px;">{{ day.count }}</span>
+            <div class="v-bar-fill-wrap" style="width: 24px; background: rgba(0,0,0,0.05); height: 80px; border-radius: 6px; display: flex; align-items: flex-end; overflow: hidden;">
+              <div class="v-bar-fill-inner" 
+                   [style.height.%]="day.percentage" 
+                   style="width: 100%; background: linear-gradient(180deg, #E65A28 0%, #F08E66 100%); transition: height 1s cubic-bezier(0.1, 0.8, 0.3, 1); border-radius: 4px;">
+              </div>
+            </div>
+            <span class="v-bar-label" style="font-size: 10px; margin-top: 6px; color: var(--ion-color-step-600);">{{ day.dateLabel.split(',')[0] }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Counts / Distribution Chart -->
+      <div class="chart-card liquid-glass ion-padding">
+        <h4>
+          <ion-icon name="people-outline" color="success"></ion-icon> 
+          {{ user.role === 'admin' ? 'Staff Distribution per Node' : 'Staff Counts by Role' }}
+        </h4>
+        <div class="horizontal-bars" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+          <div class="bar-row" *ngFor="let item of whUsersChart">
+            <div class="bar-label-wrap" style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+              <span class="bar-label" style="font-weight: 600; color: var(--ion-color-step-800);">{{ item.whName }}</span>
+              <span class="bar-val" style="font-weight: 700; color: var(--ion-color-success);">{{ item.count }} active</span>
+            </div>
+            <div class="bar-track" style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; width: 100%;">
+              <div class="bar-fill" 
+                   [style.width.%]="item.percentage" 
+                   style="height: 100%; background: linear-gradient(90deg, #3880ff 0%, #3dc2ff 100%); transition: width 1s cubic-bezier(0.1, 0.8, 0.3, 1); border-radius: 4px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- SMART SEARCH LOGINS & USERS -->
+    <div class="unified-ledger-card liquid-glass ion-margin-bottom">
+      <div class="ledger-card-header">
+        <div class="ledger-header-left">
+          <ion-icon name="shield-checkmark" class="ledger-header-icon" color="primary"></ion-icon>
+          <div>
+            <h4>Operator Login History & Security Logs</h4>
+            <p>Track sessions, IP addresses, and sign-ins</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Input Row -->
+      <div class="ledger-search-row">
+        <div class="ledger-search-input-wrap">
+          <ion-icon name="search-outline" class="search-icon-sm"></ion-icon>
+          <input 
+            type="text" 
+            [(ngModel)]="adminSearchQuery" 
+            (input)="onAdminSearchInput()"
+            placeholder="Search logins (name, role, warehouse IP...)" 
+            class="ledger-search-input-field"
+          />
+          <button class="clear-partner-search" *ngIf="adminSearchQuery" (click)="adminSearchQuery = ''; onAdminSearchInput();">
+            <ion-icon name="close-circle" color="medium"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="ledger-divider"></div>
+
+      <!-- Log Entries -->
+      <div class="ledger-package-list">
+        <div class="empty-state ion-text-center ion-padding" *ngIf="filteredLoginLogs.length === 0">
+          <ion-icon name="finger-print-outline" style="font-size: 32px; color: var(--ion-color-step-400);"></ion-icon>
+          <p style="margin-top: 8px;">No login history match your query.</p>
+        </div>
+
+        <div class="ledger-pkg-row" *ngFor="let log of filteredLoginLogs">
+          <!-- Entity / Role tag -->
+          <span class="result-entity-tag" [class]="log.role" style="margin-right: 12px; font-weight: 800; font-size: 10px;">
+            {{ log.role === 'admin' ? '[ADMIN]' : (log.role === 'manager' ? '[MANAGER]' : '[EMPLOYEE]') }}
+          </span>
+
+          <div class="ledger-pkg-info">
+            <span class="ledger-tracking" style="font-weight: 700;">@{{ log.username }}</span>
+            <span class="ledger-meta">
+              <ion-icon name="desktop-outline"></ion-icon>
+              IP: {{ log.ipAddress }} &bull; {{ log.warehouseName || 'Global Access' }}
+            </span>
+          </div>
+
+          <div class="ledger-pkg-right" style="text-align: right;">
+            <span class="ledger-date" style="font-size: 11px; color: var(--ion-color-step-600);">
+              {{ log.timestamp | date:'MMM d, h:mm:ss a' }}
+            </span>
+            <span class="status-indicator-tag" style="font-size: 9px; font-weight: 700; color: var(--ion-color-success);">
+              ● ACTIVE SESSION
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Main content for operators -->
@@ -105,9 +221,7 @@
       <div class="today-pkg-list" *ngIf="todayPackages.length > 0">
         <div class="today-pkg-row" *ngFor="let pkg of todayPackages; let i = index">
           <span class="today-pkg-index">{{ i + 1 }}</span>
-          <div class="today-carrier-dot" [class]="pkg.carrier.toLowerCase()">
-            {{ pkg.carrier.substring(0, 2) }}
-          </div>
+          <app-carrier-badge class="today-carrier-dot" [carrier]="pkg.carrier" [size]="32"></app-carrier-badge>
           <div class="today-pkg-details">
             <span class="today-tracking">{{ pkg.trackingNumber }}</span>
             <span class="today-time">

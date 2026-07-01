@@ -6,6 +6,7 @@ import { DashboardPage } from './dashboard.page';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
 
 import { DashboardPageRoutingModule } from './dashboard-routing.module';
+import { CarrierBadgeComponent } from '../shared/carrier-badge/carrier-badge.component';
 
 @NgModule({
   imports: [
@@ -13,7 +14,8 @@ import { DashboardPageRoutingModule } from './dashboard-routing.module';
     CommonModule,
     FormsModule,
     ExploreContainerComponentModule,
-    DashboardPageRoutingModule
+    DashboardPageRoutingModule,
+    CarrierBadgeComponent
   ],
   declarations: [DashboardPage]
 })

@@ -23,12 +23,21 @@
       <ion-item lines="none" class="glass-input-item ion-margin-top">
         <ion-icon name="lock-closed-outline" slot="start" class="input-icon"></ion-icon>
         <ion-input
-          type="password"
+          [type]="showPassword ? 'text' : 'password'"
           placeholder="Password"
           name="password"
           [(ngModel)]="password"
           required
         ></ion-input>
+        <button
+          type="button"
+          slot="end"
+          class="password-toggle-btn"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+        >
+          <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+        </button>
       </ion-item>
 
       <div *ngIf="errorMessage" class="error-banner">
@@ -41,37 +50,5 @@
         <ion-spinner *ngIf="isLoading" name="crescent" color="light"></ion-spinner>
       </button>
     </form>
-
-    <div class="quick-links">
-      <div class="divider">
-        <span>DEMO QUICK LOGINS</span>
-      </div>
-      
-      <div class="quick-btn-grid">
-        <button (click)="quickLogin('user@warehouse.com')" class="quick-login-btn">
-          <ion-icon name="person-outline"></ion-icon>
-          <div>
-            <strong>Staff User</strong>
-            <span>W01 - Seattle</span>
-          </div>
-        </button>
-
-        <button (click)="quickLogin('manager@warehouse.com')" class="quick-login-btn">
-          <ion-icon name="briefcase-outline"></ion-icon>
-          <div>
-            <strong>Manager</strong>
-            <span>W01 - Seattle</span>
-          </div>
-        </button>
-
-        <button (click)="quickLogin('admin@delcargo.com')" class="quick-login-btn">
-          <ion-icon name="shield-checkmark-outline"></ion-icon>
-          <div>
-            <strong>Admin Owner</strong>
-            <span>All Warehouses</span>
-          </div>
-        </button>
-      </div>
-    </div>
   </div>
 </ion-content>

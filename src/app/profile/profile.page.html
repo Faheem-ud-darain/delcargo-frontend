@@ -14,14 +14,14 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)" [scrollY]="!selectedResult">
 
   <div *ngIf="user">
     <!-- 1. PERSONAL PROFILE CARD -->
     <div class="my-profile-card liquid-glass ion-margin-bottom">
       <div class="my-profile-left">
         <div class="profile-avatar-ring">
-          <div class="avatar-text">{{ user.username.substring(0, 2).toUpperCase() }}</div>
+          <div class="avatar-text">{{ getInitials(user.username) }}</div>
         </div>
         <div class="my-profile-info">
           <h3>{{ user.username }}</h3>
@@ -36,26 +36,27 @@
       </div>
     </div>
 
-    <!-- 2. PERSONAL TELEMETRY STATS GRID -->
+    <!-- 2. TELEMETRY STATS GRID -->
     <div class="personal-stats-grid ion-margin-bottom">
       <div class="stat-box liquid-glass">
         <strong class="stat-number orange">{{ stats.todayCount }}</strong>
-        <span class="stat-label">Today</span>
+        <span class="stat-label">{{ user.role === 'admin' ? 'Global Today' : 'Today' }}</span>
       </div>
       <div class="stat-box liquid-glass">
         <strong class="stat-number">{{ stats.weekCount }}</strong>
-        <span class="stat-label">7 Days</span>
+        <span class="stat-label">{{ user.role === 'admin' ? 'Global 7 Days' : '7 Days' }}</span>
       </div>
       <div class="stat-box liquid-glass">
         <strong class="stat-number">{{ stats.monthCount }}</strong>
-        <span class="stat-label">30 Days</span>
+        <span class="stat-label">{{ user.role === 'admin' ? 'Global 30 Days' : '30 Days' }}</span>
       </div>
     </div>
 
-    <!-- 3. PERSONAL LOG HISTORY -->
+    <!-- 3. ACTIVITY LOG HISTORY -->
     <div class="personal-history-card liquid-glass ion-padding ion-margin-bottom">
       <div class="history-card-header">
-        <h4><ion-icon name="journal-outline" color="primary"></ion-icon> Personal Activity Log</h4>
+        <h4 *ngIf="user.role !== 'admin'"><ion-icon name="journal-outline" color="primary"></ion-icon> Personal Activity Log</h4>
+        <h4 *ngIf="user.role === 'admin'"><ion-icon name="globe-outline" color="primary"></ion-icon> System Activity Log</h4>
         <span class="history-count">{{ filteredPackages.length }} matches</span>
       </div>
 
@@ -65,7 +66,7 @@
           <ion-icon name="search-outline" class="search-icon-sm"></ion-icon>
           <input 
             [value]="profileQuery" 
-            placeholder="Search my logged packages..." 
+            [placeholder]="user.role === 'admin' ? 'Search all warehouse logs...' : 'Search my logged packages...'" 
             (input)="onSearchInput($any($event.target).value)"
             class="profile-search-input"
           />
@@ -88,9 +89,7 @@
 
         <!-- Row list -->
         <div class="history-item-row" *ngFor="let pkg of filteredPackages" (click)="openDetail(pkg)">
-          <div class="item-carrier-badge" [class]="pkg.carrier.toLowerCase().replace(' ', '-')">
-            {{ pkg.carrier.substring(0, 2) }}
-          </div>
+          <app-carrier-badge class="item-carrier-badge" [carrier]="pkg.carrier" [size]="36"></app-carrier-badge>
           <div class="item-details">
             <strong class="item-tracking">{{ pkg.trackingNumber }}</strong>
             <span class="item-time">
@@ -134,9 +133,7 @@
 
     <!-- Header -->
     <div class="detail-header">
-      <div class="detail-carrier-badge" [class]="selectedResult.carrier.toLowerCase().replace(' ', '-')">
-        {{ selectedResult.carrier.substring(0, 2) }}
-      </div>
+      <app-carrier-badge class="detail-carrier-badge" [carrier]="selectedResult.carrier" [size]="44"></app-carrier-badge>
       <div class="detail-title">
         <h3>Package Detail</h3>
         <span>{{ selectedResult.carrier }}</span>

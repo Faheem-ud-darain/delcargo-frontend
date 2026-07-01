@@ -37,14 +37,19 @@ export class ProfilePage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Sync load from the BehaviorSubject's current value so the template
-    // renders immediately without waiting for the next emission.
     this.user = this.auth.currentUser;
-
-    // Also subscribe to catch future user changes (e.g. logout/login).
     this.auth.currentUser$.subscribe(u => {
       this.user = u;
     });
+  }
+
+  getInitials(username: string): string {
+    if (!username) return 'DC';
+    const parts = username.split(/[_\s.-]+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return username.substring(0, 2).toUpperCase();
   }
 
   ionViewWillEnter() {
@@ -113,9 +118,25 @@ export class ProfilePage implements OnInit {
 
   openDetail(pkg: Package) {
     this.selectedResult = pkg;
+
+    // Re-parent the modal to document.body so it escapes this routed page's
+    // stacking context (same technique used for .camera-page in scanning) —
+    // otherwise its Done button can render behind the floating tab bar, and
+    // the underlying ion-content can still capture scroll/touch.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.querySelector('.search-detail-backdrop') as HTMLElement;
+      if (el && el.parentElement !== document.body) {
+        document.body.appendChild(el);
+      }
+    }));
   }
 
   closeDetail() {
+    const el = document.querySelector('.search-detail-backdrop') as HTMLElement;
+    if (el && el.parentElement === document.body) {
+      const host = document.querySelector('app-profile ion-content');
+      if (host) host.appendChild(el);
+    }
     this.selectedResult = null;
   }
 
