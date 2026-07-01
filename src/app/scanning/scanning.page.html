@@ -18,7 +18,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="scan-content-bg ion-padding">
+<ion-content [fullscreen]="true" class="scan-content-bg ion-padding" [scrollY]="!zoomImageUrl">
 
   <!-- ============================================================ -->
   <!-- STEP 1: SELECT PARTNER CARRIER                               -->
@@ -51,10 +51,9 @@
         <div
           class="recent-partner-tile"
           *ngFor="let rp of recentPartners"
-          [class]="rp.toLowerCase().replace(' ', '-') | slice:0:6"
           (click)="selectPartner(rp)"
         >
-          <div class="partner-logo">{{ rp.substring(0, 2).toUpperCase() }}</div>
+          <app-carrier-badge class="partner-logo" [carrier]="rp" [size]="32"></app-carrier-badge>
           <span>{{ rp }}</span>
         </div>
       </div>
@@ -74,9 +73,7 @@
           (click)="selectPartner(p.carrierName)"
         >
           <div class="partner-row-left">
-            <div class="partner-row-logo" [class]="p.carrierName.toLowerCase().replace(' ', '-') | slice:0:6">
-              {{ p.carrierName.substring(0, 2).toUpperCase() }}
-            </div>
+            <app-carrier-badge [carrier]="p.carrierName" [size]="28"></app-carrier-badge>
             <span class="partner-row-name">{{ p.carrierName }}</span>
           </div>
           <ion-icon name="chevron-forward-outline" color="medium"></ion-icon>
@@ -97,21 +94,15 @@
     <video #video autoplay playsinline webkit-playsinline muted></video>
 
     <!-- Top bar -->
-    <div class="camera-header-bar" *ngIf="!isImageProcessing">
+    <div class="camera-header-bar">
       <button class="header-action-btn back-btn" (click)="goBackToPartner()">
         <ion-icon name="arrow-back-outline"></ion-icon> Back
-      </button>
-      <button class="header-action-btn torch-btn" (click)="toggleTorch()" [class.torch-on]="torchOn">
-        <ion-icon [name]="torchOn ? 'flash-outline' : 'flash-off-outline'"></ion-icon>
       </button>
       <div class="header-title-pill">
         <span>Carrier: <strong>{{ selectedPartner }}</strong></span>
       </div>
       <button class="header-action-btn switch-btn" *ngIf="videoDevices.length > 1" (click)="switchCamera()">
         <ion-icon name="camera-reverse-outline"></ion-icon>
-      </button>
-      <button class="header-action-btn next-btn" [disabled]="batchItems.length === 0" (click)="goToReview()">
-        Review <ion-icon name="arrow-forward-outline"></ion-icon>
       </button>
     </div>
 
@@ -122,8 +113,7 @@
     <div class="overlay-bottom" [style.top.px]="scannerY + scannerHeight"></div>
 
     <!-- Scanner box -->
-    <div *ngIf="!isImageProcessing"
-         class="scanner-box"
+    <div class="scanner-box"
          [style.top.px]="scannerY"
          [style.left.px]="scannerX"
          [style.width.px]="scannerWidth"
@@ -135,14 +125,8 @@
       <div class="scan-line"></div>
     </div>
 
-    <!-- Processing spinner -->
-    <div class="loading-btn-container" *ngIf="isImageProcessing">
-      <ion-spinner name="crescent" color="light"></ion-spinner>
-      <p style="color:white;margin-top:10px;font-weight:700;">Processing…</p>
-    </div>
-
     <!-- Bottom action bar -->
-    <div class="scanner-actions-bar" *ngIf="!isImageProcessing">
+    <div class="scanner-actions-bar">
       <button class="scanner-action-pill count-pill">
         <ion-icon name="cube-outline"></ion-icon>
         <strong>{{ batchItems.length }}</strong> Scanned
@@ -151,17 +135,6 @@
         <ion-icon name="checkmark-done-outline"></ion-icon>
         Review Batch
       </button>
-      <button class="scanner-action-pill log-pill" (click)="showDebugPanel = !showDebugPanel">
-        <ion-icon name="terminal-outline"></ion-icon>
-        Log
-      </button>
-    </div>
-
-    <!-- Debug overlay -->
-    <div *ngIf="showDebugPanel" class="debug-panel">
-      <h4>Debug Log</h4>
-      <div *ngFor="let line of debugLogs" class="debug-line">{{ line }}</div>
-      <div *ngIf="debugLogs.length === 0" class="debug-empty">No logs yet.</div>
     </div>
   </div>
 
@@ -174,6 +147,17 @@
       <span class="step-badge">Step 2 of 3 &bull; Review</span>
       <h3>Batch Session — {{ selectedPartner }}</h3>
       <p>Tap any package to edit its status or tracking number.</p>
+    </div>
+
+    <!-- Testing Notice Banner -->
+    <div style="background: rgba(235, 132, 85, 0.15); border: 1px solid rgba(235, 132, 85, 0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px;">
+      <ion-icon name="information-circle-outline" style="color: #D45520; font-size: 20px; flex-shrink: 0; margin-top: 1px;"></ion-icon>
+      <div>
+        <h4 style="margin: 0; font-size: 12px; font-weight: 800; color: #D45520; text-transform: uppercase; letter-spacing: 0.3px;">Mobile Storage Notice</h4>
+        <p style="margin: 3px 0 0; font-size: 11px; color: #555; line-height: 1.4; font-weight: 500;">
+          All high-resolution scanned label photos are saved locally inside this mobile phone's filesystem. Only text metadata is posted to Supabase, keeping operations fast during this testing phase.
+        </p>
+      </div>
     </div>
 
     <!-- Resume scanning button -->
@@ -197,13 +181,17 @@
               <span class="item-status-badge" [class]="item.status.toLowerCase()">
                 {{ item.status === 'normal' ? 'OK' : item.status.toUpperCase() }}
               </span>
+              <button class="row-remove-btn" (click)="removeScannedItem(idx); $event.stopPropagation();">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
               <ion-icon [name]="selectedPackageForDetail === item ? 'chevron-up-outline' : 'chevron-down-outline'" class="row-chevron"></ion-icon>
             </div>
           </div>
 
           <div class="package-expand-card ion-padding animate-fade-in" *ngIf="selectedPackageForDetail === item">
-            <div class="expand-image-wrap" *ngIf="item.labelPhoto">
+            <div class="expand-image-wrap" *ngIf="item.labelPhoto" (click)="openPhotoZoom(item.labelPhoto)">
               <img [src]="item.labelPhoto" alt="Label" class="expanded-photo">
+              <div class="zoom-affordance"><ion-icon name="expand-outline"></ion-icon></div>
             </div>
             <div class="expand-fields ion-margin-top">
               <ion-item lines="none" class="glass-input-item">
@@ -219,10 +207,10 @@
                   (click)="updateItemStatus(item, item.status === 'missing' ? 'normal' : 'missing')">
                   <ion-icon name="help-circle-outline"></ion-icon> Missing
                 </button>
-                <button class="status-action-btn refund-btn"
-                  [class.active]="item.status === 'refund'"
-                  (click)="updateItemStatus(item, item.status === 'refund' ? 'normal' : 'refund')">
-                  <ion-icon name="arrow-undo-outline"></ion-icon> Refund
+                <button class="status-action-btn damaged-btn"
+                  [class.active]="item.status === 'damaged'"
+                  (click)="updateItemStatus(item, item.status === 'damaged' ? 'normal' : 'damaged')">
+                  <ion-icon name="warning-outline"></ion-icon> Damaged
                 </button>
                 <button class="status-action-btn rejected-btn"
                   [class.active]="item.status === 'rejected'"
@@ -328,3 +316,38 @@
   </div>
 
 </ion-content>
+
+<!-- ============================================================ -->
+<!-- FULL SCREEN PHOTO ZOOM VIEWER (pinch / double-tap to zoom)    -->
+<!-- ============================================================ -->
+<div class="photo-zoom-backdrop" *ngIf="zoomImageUrl" (click)="closePhotoZoom()">
+  <div class="photo-zoom-viewer" (click)="$event.stopPropagation()">
+    <button class="photo-zoom-close-btn" (click)="closePhotoZoom()">
+      <ion-icon name="close-circle-outline"></ion-icon>
+    </button>
+
+    <div class="photo-zoom-scroll-wrap"
+         (touchstart)="onZoomTouchStart($event)"
+         (touchmove)="onZoomTouchMove($event)"
+         (touchend)="onZoomTouchEnd($event)">
+      <img [src]="zoomImageUrl"
+           class="photo-zoom-img"
+           [style.transform]="viewerTransform"
+           [style.transition]="viewerTransition"
+           draggable="false" />
+    </div>
+
+    <div class="photo-zoom-controls">
+      <button class="photo-zoom-ctrl-btn" (click)="viewerZoomStep(-0.3)">
+        <ion-icon name="remove-outline"></ion-icon>
+      </button>
+      <span class="photo-zoom-level">{{ (viewerScale * 100) | number:'1.0-0' }}%</span>
+      <button class="photo-zoom-ctrl-btn" (click)="viewerZoomStep(0.3)">
+        <ion-icon name="add-outline"></ion-icon>
+      </button>
+      <button class="photo-zoom-ctrl-btn reset" (click)="viewerResetZoom()">
+        <ion-icon name="contract-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+</div>

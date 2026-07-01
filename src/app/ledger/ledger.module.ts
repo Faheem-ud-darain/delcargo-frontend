@@ -6,6 +6,7 @@ import { LedgerPage } from './ledger.page';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
 
 import { LedgerPageRoutingModule } from './ledger-routing.module';
+import { CarrierBadgeComponent } from '../shared/carrier-badge/carrier-badge.component';
 
 @NgModule({
   imports: [
@@ -13,7 +14,8 @@ import { LedgerPageRoutingModule } from './ledger-routing.module';
     CommonModule,
     FormsModule,
     ExploreContainerComponentModule,
-    LedgerPageRoutingModule
+    LedgerPageRoutingModule,
+    CarrierBadgeComponent
   ],
   declarations: [LedgerPage]
 })

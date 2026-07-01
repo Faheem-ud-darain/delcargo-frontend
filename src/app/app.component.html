@@ -11,20 +11,22 @@
     <ion-content class="ion-padding content-bg menu-content">
       <!-- User Profile Card -->
       <div class="menu-user-profile liquid-glass ion-padding ion-margin-bottom">
-        <div class="avatar-small">
-          <ion-icon name="person-outline"></ion-icon>
+        <div class="avatar-small" style="font-weight: 800; font-size: 16px; background: rgba(235, 132, 85, 0.15); color: #D45520;">
+          {{ getInitials(user.username) }}
         </div>
         <div class="user-info">
           <h4>{{ user.username }}</h4>
           <p>{{ user.email }}</p>
-          <span class="role-badge">{{ user.role }}</span>
+          <span class="role-badge" [class]="user.role" style="font-size: 8px; text-transform: uppercase; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">
+            {{ user.role }}
+          </span>
         </div>
       </div>
       
       <!-- Navigation Items -->
       <ion-list lines="none" class="menu-list">
         <ion-menu-toggle auto-hide="false">
-          <ion-item button routerLink="/tabs/dashboard" detail="false" class="menu-item-card">
+          <ion-item button routerLink="/tabs/dashboard" detail="false" class="menu-item-card" *ngIf="user.role !== 'admin'">
             <ion-icon name="camera-outline" slot="start"></ion-icon>
             <ion-label>Receive Packages</ion-label>
           </ion-item>
@@ -36,7 +38,7 @@
             <ion-icon name="person-outline" slot="start"></ion-icon>
             <ion-label>My Profile</ion-label>
           </ion-item>
-          <ion-item button routerLink="/tabs/staff" detail="false" class="menu-item-card">
+          <ion-item button routerLink="/tabs/staff" detail="false" class="menu-item-card" *ngIf="user.role !== 'user'">
             <ion-icon name="people-outline" slot="start"></ion-icon>
             <ion-label>Staff Directory</ion-label>
           </ion-item>

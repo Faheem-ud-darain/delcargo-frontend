@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
 import { MockDbService, User, Package } from '../services/mock-db.service';
-import { ScanningApisService } from '../services/scanning-apis.service';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { Camera } from '@capacitor/camera';
@@ -28,7 +27,7 @@ export interface BatchItem {
   id?: number;
   trackingNumber: string;
   carrier: string;
-  status: 'normal' | 'missing' | 'refund' | 'rejected';
+  status: 'normal' | 'missing' | 'damaged' | 'rejected';
   labelPhoto: string;
   isSync?: boolean;
   scannedAt?: number;
@@ -63,6 +62,7 @@ export class ScanningPage implements OnInit {
   selectedPartner: string = '';
   selectedCarrierObj: Carrier | null = null;
   isImageProcessing: boolean = false;
+  private audioCtx: AudioContext | null = null;
 
   // Camera elements
   @ViewChild('video', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
@@ -78,10 +78,6 @@ export class ScanningPage implements OnInit {
   // Batch state
   batchItems: BatchItem[] = [];
   selectedPackageForDetail: BatchItem | null = null;
-
-  // API sync
-  groupReceivedOrderId: number | null = null;
-  syncingWorker: any = null;
 
   // Receipt
   completedReceipt: Receipt | null = null;
@@ -102,7 +98,7 @@ export class ScanningPage implements OnInit {
     { carrierName: 'Wallmart',   regexPattern: /\b200\d{12}\b/,                                         validityType: 'custom', considerDigits: 0 },
     { carrierName: 'Lasership',  regexPattern: /(?<=^|\s)((?:1LS|LS|LX|BN)\S+)/,                       validityType: 'custom', considerDigits: 0 },
     { carrierName: 'Target',     regexPattern: /(?<=Tracking\s*#:\s*)[A-Za-z0-9]+/,                    validityType: 'custom', considerDigits: 0 },
-    { carrierName: 'Roadie',     regexPattern: /\b(?:\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15}|\d{20}|[A-Z]{2}\d{9}[A-Z]{2}|\d{3}-\d{4}-\d{4})\b/, validityType: 'custom', considerDigits: 0 },
+    { carrierName: 'Roadie',     regexPattern: /^[a-zA-Z0-9]{16}$/, validityType: 'custom', considerDigits: 0 },
     { carrierName: 'Other',      regexPattern: /^.+$/,                                                  validityType: 'custom', considerDigits: 0 }
   ];
 
@@ -114,16 +110,26 @@ export class ScanningPage implements OnInit {
 
   // Performance guards
   consecutiveMisses: number = 0;      // suppress toast spam on misses
-  torchOn: boolean = false;           // flashlight state
 
-  // Debug log
+  // Debug log (console only — no on-screen panel)
   debugLogs: string[] = [];
-  showDebugPanel: boolean = false;
+
+  // ─── Full-screen photo zoom viewer (pinch / double-tap to zoom) ──────────
+  zoomImageUrl: string | null = null;
+  viewerScale: number = 1;
+  viewerTranslateX: number = 0;
+  viewerTranslateY: number = 0;
+  viewerTransform: string = 'scale(1) translate(0px, 0px)';
+  viewerTransition: string = 'transform 0.15s ease';
+  private _vLastTouchDist: number = 0;
+  private _vLastTouchX: number = 0;
+  private _vLastTouchY: number = 0;
+  private _vLastTap: number = 0;
+  private _vIsPinching: boolean = false;
 
   constructor(
     public auth: AuthService,
     private db: MockDbService,
-    private scanningApiService: ScanningApisService,
     private router: Router,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
@@ -171,7 +177,6 @@ export class ScanningPage implements OnInit {
     // Center scanner box on current screen dimensions
     this.centerScannerBox();
     this.consecutiveMisses = 0;
-    this.torchOn = false;
 
     this.cdr.detectChanges();
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -389,7 +394,6 @@ export class ScanningPage implements OnInit {
     this.loopActive = false;  // signals the while-loop to exit
     if (this.cameraInterval) { clearInterval(this.cameraInterval); this.cameraInterval = null; }
     if (this.cameraStream)   { this.cameraStream.getTracks().forEach(t => t.stop()); this.cameraStream = null; }
-    this.torchOn = false;
     this.consecutiveMisses = 0;
   }
 
@@ -455,7 +459,6 @@ export class ScanningPage implements OnInit {
     }
     this.log('scanLoop exited');
   }
-
   // ─── Frame capture & barcode detection ───────────────────────────────────
 
   // Returns ms to wait before the next scan. The while-loop in runScanLoop() sleeps for this.
@@ -475,22 +478,121 @@ export class ScanningPage implements OnInit {
       const base64Only  = fullBase64.replace(/^data:image\/jpeg;base64,/, '');
 
       let barcodes: string[] = [];
+      let detectedAngle = 0;
 
       // ── Step 1: Barcode scan on full frame (fast, low CPU) ───────────────
       if (Capacitor.isNativePlatform()) {
         try {
           const fileUrl = await this.saveBase64ToFile(base64Only);
-          barcodes = await this.getVerifiedBarcodes(fileUrl);
+          
+          // Read raw barcodes and extract orientation/validity in one single operation
+          const raw = await BarcodeScanner.readBarcodesFromImage({
+            path: fileUrl,
+            formats: [BarcodeFormat.Code128, BarcodeFormat.DataMatrix, BarcodeFormat.QrCode, BarcodeFormat.Code39]
+          });
+
+          if (raw?.barcodes?.length > 0) {
+            // Verify if any decoded barcode matches our expected carrier
+            const verifiedList: string[] = [];
+            let matchFound = false;
+
+            for (const b of raw.barcodes) {
+              const val = b.rawValue;
+              if (!val) continue;
+              const cleanedVal = this.cleanTrackingNumber(val);
+
+              if (this.selectedCarrierObj && this.selectedCarrierObj.type && this.selectedCarrierObj.validityType === 'auto') {
+                if (getTracking(cleanedVal, [this.selectedCarrierObj.type])) {
+                  verifiedList.push(val);
+                  matchFound = true;
+                  break;
+                }
+              } else if (this.selectedCarrierObj && this.selectedCarrierObj.regexPattern) {
+                if (this.selectedCarrierObj.regexPattern.test(cleanedVal)) {
+                  verifiedList.push(val);
+                  matchFound = true;
+                  break;
+                }
+              } else {
+                verifiedList.push(val);
+                matchFound = true;
+                break;
+              }
+            }
+
+            // Silent carrier mismatch checks (as requested: log mismatch without toast interruption)
+            if (!matchFound) {
+              for (const b of raw.barcodes) {
+                const val = b.rawValue;
+                if (!val) continue;
+                const cleanedVal = this.cleanTrackingNumber(val);
+                if (cleanedVal.length < 14) continue;
+                const other = getTracking(cleanedVal);
+                if (other?.name && other.name.toLowerCase() !== this.selectedPartner.toLowerCase()) {
+                  this.log('Silenced carrier mismatch: scanned ' + other.name + ' but expected ' + this.selectedPartner);
+                }
+              }
+            }
+
+            if (verifiedList.length > 0) {
+              barcodes = verifiedList;
+
+              // ── Orientation detection from barcode geometry ────────────────
+              // Since portrait lock may be active (preventing screen.orientation change),
+              // geometry cornerPoints is our primary source of truth for the physical label orientation.
+              const firstBarcode = raw.barcodes[0];
+              const cp = firstBarcode.cornerPoints;
+              if (cp && cp.length >= 2) {
+                const p0x = Array.isArray(cp[0]) ? (cp[0] as any)[0] : (cp[0] as any).x ?? 0;
+                const p1x = Array.isArray(cp[1]) ? (cp[1] as any)[0] : (cp[1] as any).x ?? 0;
+                const p0y = Array.isArray(cp[0]) ? (cp[0] as any)[1] : (cp[0] as any).y ?? 0;
+                const p1y = Array.isArray(cp[1]) ? (cp[1] as any)[1] : (cp[1] as any).y ?? 0;
+                const dx = p1x - p0x;
+                const dy = p1y - p0y;
+                let angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+                if (angleDeg < 0) angleDeg += 360;
+
+                // Map to closest 90-degree quadrant
+                if (angleDeg > 45 && angleDeg <= 135) {
+                  detectedAngle = 270;
+                } else if (angleDeg > 135 && angleDeg <= 225) {
+                  detectedAngle = 180;
+                } else if (angleDeg > 225 && angleDeg <= 315) {
+                  detectedAngle = 90;
+                }
+              }
+            }
+          }
         } catch (e: any) {
-          if (e?.message?.includes('Carrier mismatch')) throw e;
+          this.log('Barcode read exception: ' + e?.message);
         }
       }
 
-      // ── Step 2: OCR on full frame — only if barcode scan found nothing ───
+      // ── Step 2: OCR on full frame (when barcode scan finds nothing) ───────
       if (barcodes.length === 0) {
+        // Try original orientation first
         const ocrResult = await this.getTextUsingMLKit(base64Only);
         if (ocrResult?.text) {
           barcodes = await this.getVerifiedBarcodesFromOCR(ocrResult);
+        }
+
+        // Multi-angle OCR fallback. Sideways or upside-down labels block OCR recognition completely.
+        // We systematically rotate the canvas frame and re-detect at 180°, 90°, and 270°.
+        if (barcodes.length === 0) {
+          const rotationAngles = [180, 90, 270];
+          for (const angle of rotationAngles) {
+            const rotatedB64 = await this.rotateBase64Image(fullBase64, angle);
+            const rotatedOnly = rotatedB64.replace(/^data:image\/jpeg;base64,/, '');
+            const ocrResultRotated = await this.getTextUsingMLKit(rotatedOnly);
+            if (ocrResultRotated?.text) {
+              const matched = await this.getVerifiedBarcodesFromOCR(ocrResultRotated);
+              if (matched.length > 0) {
+                barcodes = matched;
+                detectedAngle = angle;
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -500,29 +602,48 @@ export class ScanningPage implements OnInit {
         // Haptic feedback
         try { navigator.vibrate(80); } catch {}
 
-        for (const barcode of barcodes) {
-          let cut = this.selectedCarrierObj?.considerDigits ?? barcode.length;
-          if (cut === 0) cut = barcode.length;
-          const tracking = barcode.slice(cut === barcode.length ? 0 : cut).trim().toUpperCase();
-          const isDup = this.batchItems.some(i => i.trackingNumber.toUpperCase() === tracking);
+        // Apply rotation to stored photo when orientation was detected (e.g., label is sideways or upside down on the package)
+        let finalPhoto = fullBase64;
+        if (detectedAngle > 0) {
+          this.log('Auto rotating image by ' + detectedAngle + ' degrees to align label text right-side up.');
+          finalPhoto = await this.rotateBase64Image(fullBase64, detectedAngle);
+        }
 
-          if (!isDup) {
-            this.batchItems.unshift({
-              id: this.batchItems.length + 1,
-              trackingNumber: tracking,
-              carrier: this.selectedPartner,
-              status: 'normal',
-              labelPhoto: fullBase64, // full-resolution label photo stored here
-              isSync: false,
-              scannedAt: Date.now()
-            });
-            this.saveBatchState();
-            this.showToast('✓ ' + tracking, 'success', 1000);
-            nextDelay = 1500; // pause so operator can move to the next box
-          } else {
-            this.showToast('Already scanned', 'warning', 1000);
-            nextDelay = 800;
+        for (const barcode of barcodes) {
+          const cleanedBarcode = this.cleanTrackingNumber(barcode);
+          let cut = this.selectedCarrierObj?.considerDigits ?? cleanedBarcode.length;
+          if (cut === 0) cut = cleanedBarcode.length;
+          const tracking = cleanedBarcode.slice(cut === cleanedBarcode.length ? 0 : cut).trim().toUpperCase();
+          
+          const isLocalDup = this.batchItems.some(i => i.trackingNumber.toUpperCase() === tracking);
+          if (isLocalDup) {
+            this.playSound('duplicate');
+            this.showToast('⚠️ Already scanned in this batch', 'warning', 1500);
+            nextDelay = 1000;
+            continue;
           }
+
+          const isDbDup = await this.checkDuplicateInDatabase(tracking);
+          if (isDbDup) {
+            this.playSound('duplicate');
+            this.showToast('⚠️ Already Scanned', 'danger', 1500);
+            nextDelay = 1200;
+            continue;
+          }
+
+          this.batchItems.unshift({
+            id: this.batchItems.length + 1,
+            trackingNumber: tracking,
+            carrier: this.selectedPartner,
+            status: 'normal',
+            labelPhoto: finalPhoto, // save oriented photo
+            isSync: false,
+            scannedAt: Date.now()
+          });
+          this.saveBatchState();
+          this.playSound('scanned');
+          this.showToast('✓ Scanned: ' + tracking, 'success', 1000);
+          nextDelay = 1500; // pause so operator can move to the next box
         }
       } else {
         this.consecutiveMisses++;
@@ -533,10 +654,13 @@ export class ScanningPage implements OnInit {
       }
     } catch (err: any) {
       this.log('captureFrame error: ' + err?.message);
-      if (!err?.message?.includes('Carrier mismatch')) {
-        this.showToast(err?.message || 'Scan error', 'danger', 1500);
+      // Disable mismatch toast and sound as requested by user
+      if (err?.message?.includes('Carrier mismatch')) {
+        this.log('Silenced carrier mismatch: ' + err.message);
+      } else {
+        this.showToast(err?.message || 'Scan error', 'danger', 1800);
       }
-      nextDelay = 600;
+      nextDelay = 1000;
     }
 
     this.isImageProcessing = false;
@@ -586,24 +710,48 @@ export class ScanningPage implements OnInit {
     const results: string[] = [];
     if (!raw?.barcodes?.length || !this.selectedCarrierObj) return results;
 
+    let matchFound = false;
     for (const b of raw.barcodes) {
       const val = b.rawValue;
       if (!val) continue;
+
+      const cleanedVal = this.cleanTrackingNumber(val);
+
       if (this.selectedCarrierObj.type && this.selectedCarrierObj.validityType === 'auto') {
-        if (getTracking(val, [this.selectedCarrierObj.type])) { results.push(val); }
-        else {
-          const other = getTracking(val);
-          if (other?.name) throw new Error(`Carrier mismatch: scanned ${other.name}, expected ${this.selectedPartner}`);
+        if (getTracking(cleanedVal, [this.selectedCarrierObj.type])) {
+          results.push(val);
+          matchFound = true;
+          break;
         }
       } else if (this.selectedCarrierObj.regexPattern) {
-        if (this.selectedCarrierObj.regexPattern.test(val)) { results.push(val); }
-        else {
-          const other = getTracking(val);
-          if (other?.name) throw new Error(`Carrier mismatch: scanned ${other.name}, expected ${this.selectedPartner}`);
+        if (this.selectedCarrierObj.regexPattern.test(cleanedVal)) {
+          results.push(val);
+          matchFound = true;
+          break;
         }
-      } else { results.push(val); }
-      if (results.length > 0) break;
+      } else {
+        results.push(val);
+        matchFound = true;
+        break;
+      }
     }
+
+    if (!matchFound) {
+      for (const b of raw.barcodes) {
+        const val = b.rawValue;
+        if (!val) continue;
+        const cleanedVal = this.cleanTrackingNumber(val);
+        // Only throw a carrier mismatch if the barcode STRONGLY matches a
+        // known shipping carrier (length ≥ 14 to filter out UPC/EAN product
+        // codes and short retail codes that are not shipping labels)
+        if (cleanedVal.length < 14) continue;
+        const other = getTracking(cleanedVal);
+        if (other?.name && other.name.toLowerCase() !== this.selectedPartner.toLowerCase()) {
+          throw new Error(`Carrier mismatch: scanned ${other.name}, expected ${this.selectedPartner}`);
+        }
+      }
+    }
+
     return results;
   }
 
@@ -611,6 +759,59 @@ export class ScanningPage implements OnInit {
     try {
       return await CapacitorPluginMlKitTextRecognition.detectText({ base64Image: b64, rotation: 0 });
     } catch { return null; }
+  }
+
+  async checkDuplicateInDatabase(tracking: string): Promise<boolean> {
+    try {
+      const dbPackages = await firstValueFrom(this.db.getPackages({ trackingNumber: tracking, includeArchive: true }));
+      return dbPackages.some(p => p.trackingNumber.toUpperCase() === tracking.toUpperCase());
+    } catch (err) {
+      this.log('Offline: Database duplicate verification disabled.');
+      this.showToast('⚠️ Offline: Duplicate verification skipped', 'warning', 2000);
+      return false;
+    }
+  }
+
+  async rotateBase64Image(base64: string, degrees: number): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(base64); return; }
+        
+        if (degrees === 90 || degrees === 270) {
+          canvas.width = img.height;
+          canvas.height = img.width;
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        }
+        
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((degrees * Math.PI) / 180);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      };
+      img.onerror = () => resolve(base64);
+      img.src = base64;
+    });
+  }
+
+  cleanTrackingNumber(val: string): string {
+    if (!val) return '';
+    // If it's a URL containing ROADIE-, extract the ROADIE-... part
+    if (val.toUpperCase().includes('ROADIE-')) {
+      const match = val.match(/ROADIE-[A-Z0-9]+/i);
+      if (match) return match[0].toUpperCase();
+    }
+    // If it's a standard URL, try to take the last segment
+    if (val.includes('/') && (val.startsWith('http') || val.includes('.com'))) {
+      const parts = val.split('/');
+      const last = parts[parts.length - 1];
+      if (last) return last.toUpperCase();
+    }
+    return val;
   }
 
   async getVerifiedBarcodesFromOCR(res: any): Promise<string[]> {
@@ -642,8 +843,7 @@ export class ScanningPage implements OnInit {
       localStorage.setItem('delcargo_temp_batch', JSON.stringify({
         step: this.step,
         selectedPartner: this.selectedPartner,
-        batchItems: this.batchItems,
-        groupReceivedOrderId: this.groupReceivedOrderId
+        batchItems: this.batchItems
       }));
     } else {
       localStorage.removeItem('delcargo_temp_batch');
@@ -659,54 +859,10 @@ export class ScanningPage implements OnInit {
         this.batchItems            = s.batchItems;
         this.selectedPartner       = s.selectedPartner || '';
         this.selectedCarrierObj    = this.allPartners.find(p => p.carrierName.toLowerCase() === this.selectedPartner.toLowerCase()) || null;
-        this.groupReceivedOrderId  = s.groupReceivedOrderId || null;
         this.step                  = s.step || 'review';
-        this.initiateSyncing();
         if (this.step === 'scan') this.activateCameraMode();
       }
     } catch (e) { console.error('Error restoring batch state', e); }
-  }
-
-  // ─── API sync ────────────────────────────────────────────────────────────
-
-  startOcrSyncSession() {
-    this.scanningApiService.createGroupReceivedId({ carrier: this.selectedPartner.toLowerCase() }).subscribe((res: any) => {
-      if (res.status) {
-        this.groupReceivedOrderId = res.data.receivedOrder.id;
-        this.initiateSyncing();
-        this.saveBatchState();
-      } else {
-        setTimeout(() => this.startOcrSyncSession(), 3000);
-      }
-    });
-  }
-
-  initiateSyncing() {
-    if (this.syncingWorker) clearInterval(this.syncingWorker);
-    this.syncingWorker = setInterval(() => this.syncToServer(30), 5000);
-  }
-
-  async syncToServer(batch: number) {
-    const unsynced = this.batchItems.filter(i => !i.isSync).slice(0, batch);
-    if (!unsynced.length || !this.selectedPartner) return;
-    unsynced.forEach(i => i.isSync = true);
-    const payload = {
-      orders: unsynced.map(i => ({
-        trackingNumber: i.trackingNumber,
-        imgBase64: i.labelPhoto,
-        barcodeValue: i.trackingNumber,
-        isDamaged: i.status === 'refund',
-        isAccepted: i.status !== 'rejected',
-        scannedAt: i.scannedAt || Date.now()
-      })),
-      carrier: this.selectedPartner,
-      groupReceivedOrderId: this.groupReceivedOrderId
-    };
-    try {
-      const res: any = await firstValueFrom(this.scanningApiService.syncReceivedOrder(payload));
-      if (!res.status) unsynced.forEach(i => i.isSync = false);
-      else this.saveBatchState();
-    } catch { unsynced.forEach(i => i.isSync = false); }
   }
 
   // ─── Step navigation ─────────────────────────────────────────────────────
@@ -715,22 +871,7 @@ export class ScanningPage implements OnInit {
     this.selectedPartner    = name;
     this.selectedCarrierObj = this.allPartners.find(p => p.carrierName.toLowerCase() === name.toLowerCase()) || null;
     this.step               = 'scan';
-    this.startOcrSyncSession();
     this.activateCameraMode();
-  }
-
-  async toggleTorch() {
-    if (!this.cameraStream) return;
-    const track = this.cameraStream.getVideoTracks()[0];
-    if (!track) return;
-    try {
-      this.torchOn = !this.torchOn;
-      await (track as any).applyConstraints({ advanced: [{ torch: this.torchOn }] });
-      this.log('Torch: ' + (this.torchOn ? 'ON' : 'OFF'));
-    } catch {
-      this.torchOn = false;
-      this.showToast('Torch not supported on this camera', 'warning', 2000);
-    }
   }
 
   async showConfirmDialog(header: string, message: string): Promise<boolean> {
@@ -783,7 +924,6 @@ export class ScanningPage implements OnInit {
     }
     this.stopCamera();
     this.deactivateCameraMode();
-    if (this.syncingWorker) { clearInterval(this.syncingWorker); this.syncingWorker = null; }
     this.batchItems = [];
     localStorage.removeItem('delcargo_temp_batch');
     this.router.navigate(['/tabs/dashboard']);
@@ -791,7 +931,7 @@ export class ScanningPage implements OnInit {
 
   // ─── Batch actions ────────────────────────────────────────────────────────
 
-  updateItemStatus(item: BatchItem, status: 'normal' | 'missing' | 'refund' | 'rejected') {
+  updateItemStatus(item: BatchItem, status: 'normal' | 'missing' | 'damaged' | 'rejected') {
     item.status = status;
     this.saveBatchState();
     this.showToast('Status updated: ' + status.toUpperCase(), 'success', 1000);
@@ -810,7 +950,6 @@ export class ScanningPage implements OnInit {
   finishBatch() {
     if (!this.batchItems.length || !this.user) return;
     this.isSubmittingBatch = true;
-    if (this.syncingWorker) { clearInterval(this.syncingWorker); this.syncingWorker = null; }
 
     const d    = new Date();
     const yy   = d.getFullYear().toString().slice(-2);
@@ -820,6 +959,9 @@ export class ScanningPage implements OnInit {
     const serial = `REC-${yy}${mm}${dd}-${rand}`;
 
     let saved = 0;
+    let failed = 0;
+    const offlineQueue: Omit<Package, 'id' | 'receivedAt'>[] = [];
+
     this.batchItems.forEach(item => {
       const pkg: Omit<Package, 'id' | 'receivedAt'> = {
         trackingNumber: item.status !== 'normal' ? `${item.trackingNumber} [${item.status.toUpperCase()}]` : item.trackingNumber,
@@ -830,27 +972,51 @@ export class ScanningPage implements OnInit {
         labelPhoto: item.labelPhoto,
         deliveryCountPhotos: []
       };
-      this.db.savePackage(pkg).subscribe(() => {
-        saved++;
-        if (saved === this.batchItems.length) {
-          this.completedReceipt = {
-            serial,
-            totalCount: this.batchItems.length,
-            locationId: this.user?.warehouseId || 'N/A',
-            locationName: this.user?.warehouseName || 'Warehouse',
-            operator: this.user?.username || 'operator',
-            timestamp: new Date(),
-            partner: this.selectedPartner,
-            items: [...this.batchItems]
-          };
-          this.isSubmittingBatch = false;
-          this.batchItems = [];
-          localStorage.removeItem('delcargo_temp_batch');
-          this.step = 'receipt';
-          this.showToast('Receipt ' + serial + ' generated.', 'success');
+
+      this.db.savePackage(pkg).subscribe({
+        next: () => {
+          saved++;
+          this.checkSubmissionComplete(saved, failed, serial, offlineQueue);
+        },
+        error: (err) => {
+          failed++;
+          offlineQueue.push(pkg);
+          this.checkSubmissionComplete(saved, failed, serial, offlineQueue);
         }
       });
     });
+  }
+
+  private checkSubmissionComplete(saved: number, failed: number, serial: string, offlineQueue: Omit<Package, 'id' | 'receivedAt'>[]) {
+    if ((saved + failed) === this.batchItems.length) {
+      this.completedReceipt = {
+        serial,
+        totalCount: this.batchItems.length,
+        locationId: this.user?.warehouseId || 'N/A',
+        locationName: this.user?.warehouseName || 'Warehouse',
+        operator: this.user?.username || 'operator',
+        timestamp: new Date(),
+        partner: this.selectedPartner,
+        items: [...this.batchItems]
+      };
+      
+      this.isSubmittingBatch = false;
+
+      if (failed > 0) {
+        // Save to offline queue
+        const currentQueue = JSON.parse(localStorage.getItem('delcargo_offline_sync_queue') || '[]');
+        currentQueue.push(...offlineQueue);
+        localStorage.setItem('delcargo_offline_sync_queue', JSON.stringify(currentQueue));
+        
+        this.showToast(`⚠️ ${failed} items queued offline. Will sync when online.`, 'warning', 4000);
+      } else {
+        this.showToast('Receipt ' + serial + ' generated.', 'success');
+      }
+
+      this.batchItems = [];
+      localStorage.removeItem('delcargo_temp_batch');
+      this.step = 'receipt';
+    }
   }
 
   startNewBatch() {
@@ -873,9 +1039,97 @@ export class ScanningPage implements OnInit {
     return q ? this.allPartners.filter(p => p.carrierName.toLowerCase().includes(q)) : this.allPartners;
   }
 
-  async showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success', duration = 2000) {
-    const t = await this.toastCtrl.create({ message, duration, color, position: 'bottom' });
-    t.present();
+  // ─── Custom DOM Toast (renders above camera-page which is on body) ────────
+  showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success', duration = 2000) {
+    // Remove existing toasts first to avoid stacking
+    document.querySelectorAll('.scan-toast-overlay').forEach(el => el.remove());
+
+    const colorMap: Record<string, string> = {
+      success: 'linear-gradient(135deg,#1db954,#0a8a3a)',
+      danger:  'linear-gradient(135deg,#e53935,#b71c1c)',
+      warning: 'linear-gradient(135deg,#fb8c00,#e65100)'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = 'scan-toast-overlay';
+    toast.textContent = message;
+    Object.assign(toast.style, {
+      position:     'fixed',
+      bottom:       '120px',
+      left:         '50%',
+      transform:    'translateX(-50%)',
+      background:   colorMap[color] || colorMap['success'],
+      color:        '#fff',
+      padding:      '12px 22px',
+      borderRadius: '30px',
+      fontFamily:   'Inter, sans-serif',
+      fontSize:     '14px',
+      fontWeight:   '600',
+      boxShadow:    '0 6px 24px rgba(0,0,0,0.4)',
+      zIndex:       '999999',
+      whiteSpace:   'nowrap',
+      maxWidth:     '88vw',
+      overflow:     'hidden',
+      textOverflow: 'ellipsis',
+      opacity:      '0',
+      transition:   'opacity 0.2s ease'
+    });
+
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; });
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 250);
+    }, duration);
+  }
+
+  // ─── Sound effects via Web Audio API ─────────────────────────────────────
+  playSound(type: 'scanned' | 'duplicate' | 'mismatch') {
+    try {
+      if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = this.audioCtx;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'scanned') {
+        // Two quick ascending beeps — success confirmation
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+      } else if (type === 'duplicate') {
+        // Double descending beep — warning
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.setValueAtTime(400, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.28);
+      } else if (type === 'mismatch') {
+        // Low harsh buzz — error
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, ctx.currentTime);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.45);
+      }
+    } catch (e) {
+      // Audio not supported — fail silently
+    }
   }
 
   log(msg: string) {
@@ -884,5 +1138,104 @@ export class ScanningPage implements OnInit {
     console.log(entry);
     this.debugLogs.unshift(entry);
     if (this.debugLogs.length > 40) this.debugLogs.length = 40;
+  }
+
+  // ─── Full-screen photo zoom viewer ─────────────────────────────────────────
+
+  openPhotoZoom(url: string | undefined | null) {
+    if (!url) return;
+    this.zoomImageUrl = url;
+    this.viewerResetZoom();
+
+    // Re-parent to document.body so it escapes the routed page's stacking
+    // context (same technique used for .camera-page) — otherwise it can end
+    // up rendered behind the floating tab bar.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.querySelector('.photo-zoom-backdrop') as HTMLElement;
+      if (el && el.parentElement !== document.body) {
+        document.body.appendChild(el);
+      }
+    }));
+  }
+
+  closePhotoZoom() {
+    const el = document.querySelector('.photo-zoom-backdrop') as HTMLElement;
+    if (el && el.parentElement === document.body) {
+      const host = document.querySelector('app-scanning ion-content');
+      if (host) host.appendChild(el);
+    }
+    this.zoomImageUrl = null;
+  }
+
+  viewerResetZoom() {
+    this.viewerScale = 1;
+    this.viewerTranslateX = 0;
+    this.viewerTranslateY = 0;
+    this.viewerTransition = 'transform 0.25s ease';
+    this._updateViewerTransform();
+  }
+
+  viewerZoomStep(delta: number) {
+    this.viewerScale = Math.min(5, Math.max(1, this.viewerScale + delta));
+    this.viewerTransition = 'transform 0.2s ease';
+    if (this.viewerScale === 1) { this.viewerTranslateX = 0; this.viewerTranslateY = 0; }
+    this._updateViewerTransform();
+  }
+
+  private _updateViewerTransform() {
+    this.viewerTransform =
+      `scale(${this.viewerScale}) translate(${this.viewerTranslateX / this.viewerScale}px, ${this.viewerTranslateY / this.viewerScale}px)`;
+  }
+
+  private _pinchDist(t: TouchList): number {
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  onZoomTouchStart(e: TouchEvent) {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      this._vIsPinching = true;
+      this._vLastTouchDist = this._pinchDist(e.touches);
+      this.viewerTransition = 'none';
+    } else if (e.touches.length === 1) {
+      this._vIsPinching = false;
+      this._vLastTouchX = e.touches[0].clientX;
+      this._vLastTouchY = e.touches[0].clientY;
+      this.viewerTransition = 'none';
+
+      const now = Date.now();
+      if (now - this._vLastTap < 300) {
+        if (this.viewerScale > 1) { this.viewerResetZoom(); }
+        else { this.viewerZoomStep(1); }
+      }
+      this._vLastTap = now;
+    }
+  }
+
+  onZoomTouchMove(e: TouchEvent) {
+    e.preventDefault();
+    if (e.touches.length === 2 && this._vIsPinching) {
+      const dist = this._pinchDist(e.touches);
+      const ratio = dist / this._vLastTouchDist;
+      this._vLastTouchDist = dist;
+      this.viewerScale = Math.min(5, Math.max(1, this.viewerScale * ratio));
+      if (this.viewerScale === 1) { this.viewerTranslateX = 0; this.viewerTranslateY = 0; }
+      this._updateViewerTransform();
+    } else if (e.touches.length === 1 && !this._vIsPinching && this.viewerScale > 1) {
+      const dx = e.touches[0].clientX - this._vLastTouchX;
+      const dy = e.touches[0].clientY - this._vLastTouchY;
+      this._vLastTouchX = e.touches[0].clientX;
+      this._vLastTouchY = e.touches[0].clientY;
+      this.viewerTranslateX += dx;
+      this.viewerTranslateY += dy;
+      this._updateViewerTransform();
+    }
+  }
+
+  onZoomTouchEnd(e: TouchEvent) {
+    if (e.touches.length < 2) this._vIsPinching = false;
+    this.viewerTransition = 'transform 0.15s ease';
   }
 }

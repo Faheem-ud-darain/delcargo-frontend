@@ -93,33 +93,73 @@
       <!-- No results -->
       <div class="no-results" *ngIf="searchResults.length === 0">
         <ion-icon name="search-outline"></ion-icon>
-        <p>No packages found for <strong>"{{ searchQuery }}"</strong></p>
-        <span>Try searching by tracking number, carrier, operator or date</span>
+        <p>No matches found for <strong>"{{ searchQuery }}"</strong></p>
+        <span>Try searching by tracking number, carrier, operator, warehouse or roles</span>
       </div>
 
       <!-- Result count -->
       <div class="results-count" *ngIf="searchResults.length > 0">
-        <span>{{ searchResults.length }} result{{ searchResults.length === 1 ? '' : 's' }} for "{{ searchQuery }}"</span>
+        <span>{{ searchResults.length }} match{{ searchResults.length === 1 ? '' : 'es' }} for "{{ searchQuery }}"</span>
       </div>
 
       <!-- Result rows -->
-      <div class="search-result-row" *ngFor="let pkg of searchResults" (click)="openResult(pkg)">
-        <div class="result-carrier-dot" [class]="pkg.carrier.toLowerCase().replace(' ', '-')">
-          {{ pkg.carrier.substring(0, 2) }}
-        </div>
-        <div class="result-details">
-          <span class="result-tracking">{{ pkg.trackingNumber }}</span>
-          <span class="result-meta">
-            <ion-icon name="person-outline"></ion-icon> {{ pkg.receivedBy }}
-            &bull;
-            <ion-icon name="time-outline"></ion-icon> {{ pkg.receivedAt | date:'MMM d, h:mm a' }}
-          </span>
-        </div>
-        <div class="result-tags">
-          <span class="rtag damage" *ngIf="getStatusFlags(pkg).isDamage">Damage</span>
-          <span class="rtag refund" *ngIf="getStatusFlags(pkg).isRefund">Refund</span>
-          <span class="rtag ok" *ngIf="getStatusFlags(pkg).isOk">OK</span>
-        </div>
+      <div class="search-result-row" *ngFor="let item of searchResults" (click)="openResult(item)">
+        
+        <!-- Tag Indicator -->
+        <span class="result-entity-tag" [class]="item.type">
+          {{ item.tag }}
+        </span>
+
+        <!-- Package Row -->
+        <ng-container *ngIf="item.type === 'package'">
+          <app-carrier-badge class="result-carrier-dot" [carrier]="item.data.carrier" [size]="36"></app-carrier-badge>
+          <div class="result-details">
+            <span class="result-tracking">{{ item.title }}</span>
+            <span class="result-meta">
+              <ion-icon name="person-outline"></ion-icon> {{ item.data.receivedBy }}
+              &bull;
+              <ion-icon name="time-outline"></ion-icon> {{ item.data.receivedAt | date:'MMM d, h:mm a' }}
+            </span>
+          </div>
+          <div class="result-tags">
+            <span class="rtag damage" *ngIf="getStatusFlags(item.data).isDamage">Damage</span>
+            <span class="rtag refund" *ngIf="getStatusFlags(item.data).isRefund">Refund</span>
+            <span class="rtag ok" *ngIf="getStatusFlags(item.data).isOk">OK</span>
+          </div>
+        </ng-container>
+
+        <!-- User Row -->
+        <ng-container *ngIf="item.type === 'user'">
+          <div class="result-carrier-dot user-type">
+            <ion-icon name="person-circle"></ion-icon>
+          </div>
+          <div class="result-details">
+            <span class="result-tracking">{{ item.title }}</span>
+            <span class="result-meta">
+              <ion-icon name="mail-outline"></ion-icon> {{ item.data.email }}
+            </span>
+          </div>
+          <div class="result-tags">
+            <span class="rtag role" [class]="item.data.role">{{ item.data.role.toUpperCase() }}</span>
+          </div>
+        </ng-container>
+
+        <!-- Warehouse Row -->
+        <ng-container *ngIf="item.type === 'warehouse'">
+          <div class="result-carrier-dot warehouse-type">
+            <ion-icon name="business"></ion-icon>
+          </div>
+          <div class="result-details">
+            <span class="result-tracking">{{ item.title }}</span>
+            <span class="result-meta">
+              <ion-icon name="location-outline"></ion-icon> {{ item.data.location }}
+            </span>
+          </div>
+          <div class="result-tags">
+            <span class="rtag code">{{ item.data.id }}</span>
+          </div>
+        </ng-container>
+
         <ion-icon name="chevron-forward-outline" class="result-arrow"></ion-icon>
       </div>
     </div>
@@ -128,70 +168,180 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════ -->
-<!-- SEARCH RESULT DETAIL MODAL                         -->
+<!-- SEARCH RESULT DETAIL MODAL (PACKAGE)               -->
 <!-- ═══════════════════════════════════════════════════ -->
 <div class="search-detail-backdrop" [class.open]="selectedResult" (click)="closeResult()">
   <div class="search-detail-modal" *ngIf="selectedResult" (click)="$event.stopPropagation()">
     <div class="modal-drag-handle"></div>
 
-    <!-- Header -->
-    <div class="detail-header">
-      <div class="detail-carrier-badge" [class]="selectedResult.carrier.toLowerCase().replace(' ', '-')">
-        {{ selectedResult.carrier.substring(0, 2) }}
+    <!-- scrollable body -->
+    <div class="modal-scroll-body">
+      <div class="detail-header">
+        <app-carrier-badge class="detail-carrier-badge" [carrier]="selectedResult.carrier" [size]="44"></app-carrier-badge>
+        <div class="detail-title">
+          <h3>Package Detail <span class="tag-badge-inline package">[PACKAGE]</span></h3>
+          <span>{{ selectedResult.carrier }}</span>
+        </div>
+        <button class="detail-close-btn" (click)="closeResult()">
+          <ion-icon name="close"></ion-icon>
+        </button>
       </div>
-      <div class="detail-title">
-        <h3>Package Detail</h3>
-        <span>{{ selectedResult.carrier }}</span>
+
+      <div class="detail-tracking-hero">
+        <span class="tracking-label">Tracking Number</span>
+        <strong class="tracking-value">{{ selectedResult.trackingNumber }}</strong>
       </div>
-      <button class="detail-close-btn" (click)="closeResult()">
-        <ion-icon name="close"></ion-icon>
-      </button>
+
+      <div class="detail-status-chips">
+        <span class="dchip ok" *ngIf="getStatusFlags(selectedResult).isOk">
+          <ion-icon name="checkmark-circle-outline"></ion-icon> Normal
+        </span>
+        <span class="dchip damage" *ngIf="getStatusFlags(selectedResult).isDamage">
+          <ion-icon name="alert-circle-outline"></ion-icon> Damaged
+        </span>
+        <span class="dchip refund" *ngIf="getStatusFlags(selectedResult).isRefund">
+          <ion-icon name="arrow-undo-outline"></ion-icon> Refund
+        </span>
+      </div>
+
+      <div class="detail-meta-grid">
+        <div class="meta-cell">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Received</span>
+          <strong>{{ selectedResult.receivedAt | date:'MMM d, y' }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="time-outline"></ion-icon>
+          <span>Time</span>
+          <strong>{{ selectedResult.receivedAt | date:'h:mm a' }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="person-outline"></ion-icon>
+          <span>Operator</span>
+          <strong>{{ selectedResult.receivedBy }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="business-outline"></ion-icon>
+          <span>Warehouse</span>
+          <strong>{{ selectedResult.warehouseName }}</strong>
+        </div>
+      </div>
+
+      <!-- Scanned Label Photo -->
+      <div style="margin-top: 15px; margin-bottom: 8px;" *ngIf="selectedResult.localPhotoUrl || selectedResult.labelPhoto">
+        <span style="font-size: 10px; font-weight: 750; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Shipping Label Photo</span>
+        <div style="width: 100%; max-height: 200px; border-radius: 14px; overflow: hidden; border: 1.5px solid rgba(0,0,0,0.08); background: #f7f9fc; display: flex; align-items: center; justify-content: center; cursor: pointer;" (click)="fullScreenImageUrl = selectedResult.localPhotoUrl || selectedResult.labelPhoto">
+          <img [src]="selectedResult.localPhotoUrl || selectedResult.labelPhoto" style="max-width: 100%; max-height: 200px; object-fit: contain;" />
+        </div>
+      </div>
     </div>
 
-    <!-- Tracking Hero -->
-    <div class="detail-tracking-hero">
-      <span class="tracking-label">Tracking Number</span>
-      <strong class="tracking-value">{{ selectedResult.trackingNumber }}</strong>
+    <!-- sticky footer — always above nav bar -->
+    <div class="modal-sticky-footer">
+      <button class="detail-done-btn" (click)="closeResult()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SEARCH RESULT DETAIL MODAL (USER)                  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="search-detail-backdrop" [class.open]="selectedUserResult" (click)="closeResult()">
+  <div class="search-detail-modal" *ngIf="selectedUserResult" (click)="$event.stopPropagation()">
+    <div class="modal-drag-handle"></div>
+
+    <div class="modal-scroll-body">
+      <div class="detail-header">
+        <div class="detail-carrier-badge user-badge">
+          <ion-icon name="person"></ion-icon>
+        </div>
+        <div class="detail-title">
+          <h3>User Profile <span class="tag-badge-inline user">[{{ selectedUserResult.role.toUpperCase() }}]</span></h3>
+          <span>Account Details</span>
+        </div>
+        <button class="detail-close-btn" (click)="closeResult()">
+          <ion-icon name="close"></ion-icon>
+        </button>
+      </div>
+
+      <div class="detail-tracking-hero">
+        <span class="tracking-label">Username</span>
+        <strong class="tracking-value">@{{ selectedUserResult.username }}</strong>
+      </div>
+
+      <div class="detail-meta-grid">
+        <div class="meta-cell">
+          <ion-icon name="mail-outline"></ion-icon>
+          <span>Email Address</span>
+          <strong>{{ selectedUserResult.email }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="shield-checkmark-outline"></ion-icon>
+          <span>Security Role</span>
+          <strong style="text-transform: capitalize;">{{ selectedUserResult.role }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="business-outline"></ion-icon>
+          <span>Assigned Node</span>
+          <strong>{{ selectedUserResult.warehouseName || 'Global Access (Admin)' }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="card-outline"></ion-icon>
+          <span>Node ID</span>
+          <strong>{{ selectedUserResult.warehouseId || 'ALL' }}</strong>
+        </div>
+      </div>
     </div>
 
-    <!-- Status Chips -->
-    <div class="detail-status-chips">
-      <span class="dchip ok" *ngIf="getStatusFlags(selectedResult).isOk">
-        <ion-icon name="checkmark-circle-outline"></ion-icon> Normal
-      </span>
-      <span class="dchip damage" *ngIf="getStatusFlags(selectedResult).isDamage">
-        <ion-icon name="alert-circle-outline"></ion-icon> Damaged
-      </span>
-      <span class="dchip refund" *ngIf="getStatusFlags(selectedResult).isRefund">
-        <ion-icon name="arrow-undo-outline"></ion-icon> Refund
-      </span>
+    <div class="modal-sticky-footer">
+      <button class="detail-done-btn" (click)="closeResult()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SEARCH RESULT DETAIL MODAL (WAREHOUSE)            -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="search-detail-backdrop" [class.open]="selectedWarehouseResult" (click)="closeResult()">
+  <div class="search-detail-modal" *ngIf="selectedWarehouseResult" (click)="$event.stopPropagation()">
+    <div class="modal-drag-handle"></div>
+
+    <div class="modal-scroll-body">
+      <div class="detail-header">
+        <div class="detail-carrier-badge warehouse-badge">
+          <ion-icon name="business"></ion-icon>
+        </div>
+        <div class="detail-title">
+          <h3>Warehouse Node <span class="tag-badge-inline warehouse">[WAREHOUSE]</span></h3>
+          <span>Location Profile</span>
+        </div>
+        <button class="detail-close-btn" (click)="closeResult()">
+          <ion-icon name="close"></ion-icon>
+        </button>
+      </div>
+
+      <div class="detail-tracking-hero">
+        <span class="tracking-label">Warehouse Name</span>
+        <strong class="tracking-value">{{ selectedWarehouseResult.name }}</strong>
+      </div>
+
+      <div class="detail-meta-grid">
+        <div class="meta-cell">
+          <ion-icon name="location-outline"></ion-icon>
+          <span>City, State</span>
+          <strong>{{ selectedWarehouseResult.location }}</strong>
+        </div>
+        <div class="meta-cell">
+          <ion-icon name="key-outline"></ion-icon>
+          <span>Access Node Code</span>
+          <strong>{{ selectedWarehouseResult.id }}</strong>
+        </div>
+      </div>
     </div>
 
-    <!-- Meta Grid -->
-    <div class="detail-meta-grid">
-      <div class="meta-cell">
-        <ion-icon name="calendar-outline"></ion-icon>
-        <span>Received</span>
-        <strong>{{ selectedResult.receivedAt | date:'MMM d, y' }}</strong>
-      </div>
-      <div class="meta-cell">
-        <ion-icon name="time-outline"></ion-icon>
-        <span>Time</span>
-        <strong>{{ selectedResult.receivedAt | date:'h:mm a' }}</strong>
-      </div>
-      <div class="meta-cell">
-        <ion-icon name="person-outline"></ion-icon>
-        <span>Operator</span>
-        <strong>{{ selectedResult.receivedBy }}</strong>
-      </div>
-      <div class="meta-cell">
-        <ion-icon name="business-outline"></ion-icon>
-        <span>Warehouse</span>
-        <strong>{{ selectedResult.warehouseName }}</strong>
-      </div>
+    <div class="modal-sticky-footer">
+      <button class="detail-done-btn" (click)="closeResult()">Done</button>
     </div>
-
-    <button class="detail-done-btn" (click)="closeResult()">Done</button>
   </div>
 </div>
 
@@ -272,7 +422,7 @@
 
       <!-- Navigation Links -->
       <div class="menu-links-list">
-        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/dashboard')">
+        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/dashboard')" *ngIf="user.role !== 'admin'">
           <ion-icon name="camera-outline"></ion-icon>
           <span>Receive Packages</span>
         </button>
@@ -284,7 +434,7 @@
           <ion-icon name="person-outline"></ion-icon>
           <span>My Profile</span>
         </button>
-        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/staff')">
+        <button class="menu-nav-btn" (click)="navigateToRoute('/tabs/staff')" *ngIf="user.role !== 'user'">
           <ion-icon name="people-outline"></ion-icon>
           <span>Staff Directory</span>
         </button>
@@ -302,5 +452,59 @@
         <span color="danger">Log Out</span>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Full Screen Image Viewer with Pinch-to-Zoom -->
+<div class="full-screen-img-backdrop"
+     *ngIf="fullScreenImageUrl"
+     (click)="fullScreenImageUrl = null"
+     id="fsiBackdrop">
+  <div class="viewer-container" (click)="$event.stopPropagation()">
+
+    <!-- Close button -->
+    <button class="close-viewer-btn" (click)="fullScreenImageUrl = null">
+      <ion-icon name="close-circle-outline"></ion-icon>
+    </button>
+
+    <!-- Zoom hint -->
+    <div class="zoom-hint-pill" id="zoomHintPill">
+      <ion-icon name="expand-outline"></ion-icon> Pinch or double-tap to zoom
+    </div>
+
+    <!-- Zoomable image wrapper -->
+    <div class="pinch-scroll-wrap" id="pinchWrap"
+         (touchstart)="onViewerTouchStart($event)"
+         (touchmove)="onViewerTouchMove($event)"
+         (touchend)="onViewerTouchEnd($event)">
+      <img [src]="fullScreenImageUrl"
+           class="full-size-img"
+           id="zoomImg"
+           [style.transform]="viewerTransform"
+           [style.transformOrigin]="viewerOrigin"
+           [style.transition]="viewerTransition"
+           draggable="false" />
+    </div>
+
+    <!-- Zoom controls -->
+    <div class="viewer-zoom-controls">
+      <button class="zoom-ctrl-btn" (click)="rotateManual('left')" title="Rotate Left">
+        <ion-icon name="refresh-outline" style="transform: scaleX(-1);"></ion-icon>
+      </button>
+      <button class="zoom-ctrl-btn" (click)="viewerZoomStep(-0.3)">
+        <ion-icon name="remove-outline"></ion-icon>
+      </button>
+      <span class="zoom-level-label">{{ (viewerScale * 100) | number:'1.0-0' }}%</span>
+      <button class="zoom-ctrl-btn" (click)="viewerZoomStep(0.3)">
+        <ion-icon name="add-outline"></ion-icon>
+      </button>
+      <button class="zoom-ctrl-btn" (click)="rotateManual('right')" title="Rotate Right">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </button>
+      <button class="zoom-ctrl-btn reset-btn" (click)="viewerResetZoom()">
+        <ion-icon name="contract-outline"></ion-icon>
+      </button>
+    </div>
+
   </div>
 </div>

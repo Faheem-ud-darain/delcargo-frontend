@@ -13,6 +13,7 @@ export class LoginPage {
   password: string = '';
   isLoading: boolean = false;
   errorMessage: string = '';
+  showPassword: boolean = false;
 
   constructor(
     private auth: AuthService,
@@ -36,9 +37,7 @@ export class LoginPage {
     });
   }
 
-  quickLogin(email: string) {
-    this.email = email;
-    this.password = 'demo-pass';
-    this.onLogin();
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

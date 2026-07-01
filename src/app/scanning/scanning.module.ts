@@ -4,13 +4,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ScanningPage } from './scanning.page';
 import { ScanningPageRoutingModule } from './scanning-routing.module';
+import { CarrierBadgeComponent } from '../shared/carrier-badge/carrier-badge.component';
 
 @NgModule({
   imports: [
     IonicModule,
     CommonModule,
     FormsModule,
-    ScanningPageRoutingModule
+    ScanningPageRoutingModule,
+    CarrierBadgeComponent
   ],
   declarations: [ScanningPage]
 })

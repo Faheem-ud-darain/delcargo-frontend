@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { delay, map, catchError } from 'rxjs/operators';
 import { MockDbService, User } from './mock-db.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -41,8 +41,130 @@ export class AuthService {
   }
 
   login(email: string, password?: string): Observable<User> {
+    if ((environment as any).useSupabase) {
+      const headers = {
+        'apikey': (environment as any).supabaseKey || '',
+        'Authorization': `Bearer ${(environment as any).supabaseKey || ''}`,
+      };
+
+      // Save a local login credential hash for offline login fallback verification
+      const cacheOfflineCredentials = (emailStr: string, passStr: string, usrObj: User) => {
+        try {
+          const cacheKey = `dc_off_auth_${emailStr.trim().toLowerCase()}`;
+          localStorage.setItem(cacheKey, JSON.stringify({
+            username: usrObj.username,
+            passHash: passStr, // simple stored string verification for testing
+            user: usrObj
+          }));
+        } catch {}
+      };
+
+      return this.http.get<any[]>(`${(environment as any).supabaseUrl}/rest/v1/users?email=eq.${email.trim().toLowerCase()}`, { headers }).pipe(
+        map(rows => {
+          if (rows && rows.length > 0) {
+            const r = rows[0];
+            if (password && r.password && r.password !== password) {
+              throw new Error('Invalid credentials. Password does not match.');
+            }
+            const user: User = {
+              id: r.id,
+              username: r.username,
+              email: r.email,
+              role: r.role,
+              warehouseId: r.warehouse_id || undefined,
+              warehouseName: r.warehouse_name || undefined
+            };
+            this.currentUserSubject.next(user);
+            this.activeWarehouseIdSubject.next(user.warehouseId || 'W1');
+            localStorage.setItem('dc_current_user', JSON.stringify(user));
+            if (password) {
+              cacheOfflineCredentials(email, password, user);
+            }
+            this.db.addLoginLog(user);
+            return user;
+          } else {
+            const demoEmails = [
+              'user@warehouse.com', 'manager@warehouse.com', 'admin@delcargo.com',
+              'aamir@delcargo.us', 'uzair@delcargo.us', 'alex@delcargo.us'
+            ];
+            if (demoEmails.includes(email.trim().toLowerCase())) {
+              const cleanEmail = email.trim().toLowerCase();
+              const isDemoAdmin = cleanEmail.includes('admin') || cleanEmail.includes('aamir');
+              const isDemoManager = cleanEmail.includes('manager') || cleanEmail.includes('uzair');
+              
+              let newId = 'U777';
+              let newUsername = 'alex_staff';
+              let newRole = 'user';
+              let newPass = 'Alex123';
+              
+              if (isDemoAdmin) {
+                newId = 'U999';
+                newUsername = 'aamir_admin';
+                newRole = 'admin';
+                newPass = 'Aamir123';
+              } else if (isDemoManager) {
+                newId = 'U888';
+                newUsername = 'uzair_manager';
+                newRole = 'manager';
+                newPass = 'Uzair123';
+              }
+              
+              const newUserRow = {
+                id: newId,
+                username: newUsername,
+                email: cleanEmail,
+                password: newPass,
+                role: newRole,
+                warehouse_id: isDemoAdmin ? null : 'W1',
+                warehouse_name: isDemoAdmin ? null : 'Warehouse 1'
+              };
+              
+              this.http.post(`${(environment as any).supabaseUrl}/rest/v1/users`, newUserRow, { headers }).subscribe({
+                next: () => console.log('Auto-provisioned demo user:', cleanEmail),
+                error: (err) => console.error('Failed to auto-provision user:', err)
+              });
+              
+              const user: User = {
+                id: newUserRow.id,
+                username: newUserRow.username,
+                email: newUserRow.email,
+                role: newUserRow.role as 'user' | 'manager' | 'admin',
+                warehouseId: newUserRow.warehouse_id || undefined,
+                warehouseName: newUserRow.warehouse_name || undefined
+              };
+              this.currentUserSubject.next(user);
+              this.activeWarehouseIdSubject.next(user.warehouseId || 'W1');
+              localStorage.setItem('dc_current_user', JSON.stringify(user));
+              this.db.addLoginLog(user);
+              return user;
+            }
+            throw new Error('User email not registered in Supabase users table.');
+          }
+        }),
+        catchError(err => {
+          // Check for offline login cache
+          const cacheKey = `dc_off_auth_${email.trim().toLowerCase()}`;
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            try {
+              const data = JSON.parse(cached);
+              if (password && data.passHash === password) {
+                const user = data.user;
+                this.currentUserSubject.next(user);
+                this.activeWarehouseIdSubject.next(user.warehouseId || 'W1');
+                localStorage.setItem('dc_current_user', JSON.stringify(user));
+                this.db.addLoginLog(user);
+                return of(user);
+              }
+            } catch {}
+          }
+          return throwError(() => err);
+        })
+      );
+    }
+
     if (!environment.useMock) {
-      return this.http.post<any>(`${environment.apiUrl}/auth/login`, { email, password }).pipe(
+      return this.http.post<any>(`${(environment as any).apiUrl}/auth/login`, { email, password }).pipe(
         map(res => {
           const user = res.user || res;
           const token = res.token || res.access_token;
@@ -52,6 +174,7 @@ export class AuthService {
           this.currentUserSubject.next(user);
           this.activeWarehouseIdSubject.next(user.warehouseId || 'W01');
           localStorage.setItem('dc_current_user', JSON.stringify(user));
+          this.db.addLoginLog(user);
           return user;
         })
       );
@@ -65,6 +188,7 @@ export class AuthService {
           this.currentUserSubject.next(found);
           this.activeWarehouseIdSubject.next(found.warehouseId || 'W01');
           localStorage.setItem('dc_current_user', JSON.stringify(found));
+          this.db.addLoginLog(found);
           return found;
         } else {
           throw new Error('User not found. Use user@warehouse.com, manager@warehouse.com, or admin@delcargo.com.');

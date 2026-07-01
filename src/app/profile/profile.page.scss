@@ -265,24 +265,9 @@
       background: rgba(235, 132, 85, 0.03);
     }
     
+    // Logo rendering/coloring now lives inside CarrierBadgeComponent.
     .item-carrier-badge {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 850;
-      color: #fff;
-      text-transform: uppercase;
       flex-shrink: 0;
-      
-      &.fedex { background: #4B2989; }
-      &.ups { background: #ffaa00; color: #111; }
-      &.amazon, &.amazon-logistics { background: #232f3e; }
-      &.usps { background: #3880FF; }
-      &.dhl, &.dhl-express { background: #F44336; }
     }
     
     .item-details {
@@ -423,7 +408,11 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
-  z-index: 6000;
+  // Re-parented to document.body on open (see openDetail() in profile.page.ts)
+  // so this no longer needs to fight the routed page's stacking context —
+  // kept high regardless as a safety margin, matching the other body-level
+  // overlays (camera-page, photo-zoom-backdrop, ledger detail-backdrop).
+  z-index: 200000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.28s ease;
@@ -469,24 +458,9 @@
     gap: 14px;
     margin-bottom: 20px;
     
+    // Logo rendering/coloring now lives inside CarrierBadgeComponent.
     .detail-carrier-badge {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 850;
-      color: #fff;
-      text-transform: uppercase;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-      
-      &.fedex { background: #4B2989; }
-      &.ups { background: #ffaa00; color: #111; }
-      &.amazon, &.amazon-logistics { background: #232f3e; }
-      &.usps { background: #3880FF; }
-      &.dhl, &.dhl-express { background: #F44336; }
+      flex-shrink: 0;
     }
     
     .detail-title {

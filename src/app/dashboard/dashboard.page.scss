@@ -290,25 +290,9 @@
         flex-shrink: 0;
       }
       
+      // Logo rendering/coloring now lives inside CarrierBadgeComponent.
       .today-carrier-dot {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 800;
-        color: #fff;
         flex-shrink: 0;
-        text-transform: uppercase;
-        
-        &.fedex   { background: #4B2989; }
-        &.ups     { background: #ffaa00; color: #111; }
-        &.amazon  { background: #232f3e; }
-        &.usps    { background: #3880FF; }
-        &.dhl     { background: #F44336; }
-        &.default { background: #EB8455; }
       }
       
       .today-pkg-details {
@@ -2153,6 +2137,267 @@
   
   strong {
     color: #EB8455;
+  }
+}
+
+/* ============================================== */
+/* ADMIN TELEMETRY CONTROL CENTER SCSS           */
+/* ============================================== */
+
+.dashboard-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.chart-card {
+  border-radius: 20px;
+  
+  h4 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    ion-icon {
+      font-size: 18px;
+    }
+  }
+}
+
+.v-bar-fill-inner {
+  background: linear-gradient(180deg, #E65A28 0%, #F08E66 100%);
+  animation: growVertical 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.bar-fill {
+  background: linear-gradient(90deg, #3880ff 0%, #3dc2ff 100%);
+  animation: growHorizontal 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes growVertical {
+  from { height: 0%; }
+}
+
+@keyframes growHorizontal {
+  from { width: 0%; }
+}
+
+/* Result Entity Badges/Tags */
+.result-entity-tag {
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  
+  &.admin, &.admin-type {
+    background: rgba(230, 90, 40, 0.1);
+    color: #D45520;
+    border: 1px solid rgba(230, 90, 40, 0.2);
+  }
+  
+  &.manager, &.manager-type {
+    background: rgba(147, 51, 234, 0.1);
+    color: #9333ea;
+    border: 1px solid rgba(147, 51, 234, 0.2);
+  }
+  
+  &.user, &.employee, &.user-type {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+  
+  &.warehouse, &.warehouse-type {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  
+  &.package, &.package-type {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+}
+
+.user-role-badge-tag {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+  
+  &.manager {
+    background: rgba(147, 51, 234, 0.1);
+    color: #9333ea;
+  }
+  
+  &.user {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+  }
+}
+
+.status-indicator-tag {
+  animation: pulseSession 2s infinite;
+}
+
+@keyframes pulseSession {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Unified card structure inside dashboard */
+.unified-ledger-card {
+  border-radius: 20px;
+  overflow: hidden;
+  
+  .ledger-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 0;
+    
+    .ledger-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      .ledger-header-icon {
+        font-size: 20px;
+        color: #EB8455;
+      }
+      
+      h4 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 750;
+        color: #111;
+      }
+      
+      p {
+        margin: 1px 0 0;
+        font-size: 11px;
+        color: #888;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.ledger-search-row {
+  padding: 12px 16px 8px;
+  
+  .ledger-search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 12px;
+    padding: 4px 10px;
+    width: 100%;
+    box-sizing: border-box;
+    
+    .search-icon-sm {
+      font-size: 16px;
+      color: #EB8455;
+      flex-shrink: 0;
+    }
+    
+    .ledger-search-input-field {
+      width: 100%;
+      border: none !important;
+      background: transparent !important;
+      outline: none !important;
+      font-size: 13px;
+      font-weight: 500;
+      color: #111;
+      padding: 6px 0;
+    }
+  }
+}
+
+.ledger-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05);
+  margin: 4px 16px;
+}
+
+.ledger-package-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  
+  .ledger-pkg-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    
+    &:last-of-type {
+      border-bottom: none;
+    }
+    
+    .ledger-pkg-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      
+      .ledger-tracking {
+        font-size: 13px;
+        font-weight: 750;
+        color: #111;
+      }
+      
+      .ledger-meta {
+        font-size: 11px;
+        color: #777;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        
+        ion-icon {
+          font-size: 12px;
+          color: #EB8455;
+          margin-right: 2px;
+        }
+      }
+    }
+    
+    .ledger-pkg-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      flex-shrink: 0;
+      
+      .ledger-date {
+        font-size: 10px;
+        color: #999;
+        font-weight: 500;
+      }
+    }
   }
 }
 

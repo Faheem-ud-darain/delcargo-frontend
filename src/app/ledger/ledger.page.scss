@@ -33,6 +33,7 @@
     &.blue { background: rgba(56, 128, 255, 0.1); color: #3880FF; }
     &.orange { background: rgba(235, 132, 85, 0.1); color: #EB8455; }
     &.green { background: rgba(45, 211, 111, 0.1); color: #2dd36f; }
+    &.purple { background: rgba(147, 51, 234, 0.1); color: #9333ea; }
   }
   
   .stat-content {
@@ -320,24 +321,9 @@
         background: rgba(235, 132, 85, 0.04);
       }
       
+      // Logo rendering/coloring now lives inside CarrierBadgeComponent.
       .ledger-carrier-dot {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 800;
-        color: #fff;
         flex-shrink: 0;
-        text-transform: uppercase;
-        
-        &.fedex { background: #4B2989; }
-        &.ups { background: #ffaa00; color: #111; }
-        &.amazon { background: #232f3e; }
-        &.usps { background: #3880FF; }
-        &.dhl { background: #F44336; }
       }
       
       .ledger-pkg-info {
@@ -448,7 +434,10 @@
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  z-index: 1000;
+  // Re-parented to document.body on open (see openDetail() in ledger.page.ts)
+  // so this no longer needs to fight the routed page's stacking context —
+  // kept high regardless as a safety margin.
+  z-index: 200000;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -464,6 +453,8 @@
   box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.12);
   animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   background: rgba(255, 255, 255, 0.92) !important;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   
   .modal-handle-bar {
     width: 40px;
@@ -487,23 +478,9 @@
       align-items: center;
       gap: 12px;
       
+      // Logo rendering/coloring now lives inside CarrierBadgeComponent.
       .modal-carrier-badge {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 800;
-        color: #fff;
-        text-transform: uppercase;
-        
-        &.fedex { background: #4B2989; }
-        &.ups { background: #ffaa00; color: #111; }
-        &.amazon { background: #232f3e; }
-        &.usps { background: #3880FF; }
-        &.dhl { background: #F44336; }
+        flex-shrink: 0;
       }
       
       h3 {
@@ -542,6 +519,7 @@
   .modal-scroll-body {
     flex: 1;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -711,8 +689,10 @@
   
   .modal-footer {
     padding: 14px 20px;
+    padding-bottom: max(14px, calc(env(safe-area-inset-bottom, 0px) + 14px));
     border-top: 1px solid rgba(0, 0, 0, 0.06);
     flex-shrink: 0;
+    background: rgba(255,255,255,0.95);
     
     .modal-close-full-btn {
       width: 100%;
@@ -903,39 +883,108 @@
   span { font-size: 12px; font-weight: 600; color: #333; }
 }
 
-.package-list { display: flex; flex-direction: column; gap: 12px; }
+// Warehouse activity list — a compact row list (matching .ledger-pkg-row
+// used in the standard user view) instead of one heavy liquid-glass card
+// per package. Much easier to scan for a busy warehouse, and avoids
+// stacking dozens of backdrop-filter cards in one scrolling list.
+.wh-package-list-wrap {
+  border-radius: 16px;
+  overflow: hidden;
 
-.package-card {
+  .ledger-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px 16px;
+
+    span {
+      font-size: 12px;
+      color: #888;
+      font-weight: 500;
+    }
+  }
+}
+
+.wh-package-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wh-package-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
   cursor: pointer;
-  transition: transform 0.2s;
-  &:active { transform: scale(0.98); }
-  
-  .pkg-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    .pkg-date { font-size: 11px; color: #666; }
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background 0.15s ease;
+
+  &:last-of-type { border-bottom: none; }
+  &:active { background: rgba(235, 132, 85, 0.05); }
+
+  // Logo rendering/coloring now lives inside CarrierBadgeComponent.
+  .wh-pkg-carrier-dot {
+    flex-shrink: 0;
   }
-  
-  .tracking-title { margin: 0; font-size: 15px; font-weight: 750; color: #111; }
-  
-  .pkg-meta {
-    margin: 4px 0 0;
-    font-size: 12px;
-    color: #555;
+
+  .wh-pkg-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .wh-pkg-tracking {
+      font-size: 13px;
+      font-weight: 750;
+      color: #111;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .wh-pkg-meta {
+      font-size: 11px;
+      color: #777;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+
+      ion-icon { font-size: 12px; color: #EB8455; }
+    }
+  }
+
+  .wh-pkg-right {
     display: flex;
     align-items: center;
-    gap: 4px;
-    ion-icon { font-size: 14px; color: #EB8455; }
-  }
-  
-  .count-badge {
-    --background: rgba(45, 211, 111, 0.08);
-    --color: #2dd36f;
-    font-size: 10px;
-    font-weight: 700;
-    margin: 8px 0 0;
+    gap: 8px;
+    flex-shrink: 0;
+
+    .wh-pkg-verified-icon {
+      font-size: 15px;
+      color: #2dd36f;
+    }
+
+    .wh-pkg-carrier-tag {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 5px;
+
+      &.fedex  { background: rgba(75, 41, 137, 0.1);  color: #4B2989; }
+      &.ups    { background: rgba(255, 193, 7, 0.15); color: #b78700; }
+      &.amazon { background: rgba(0, 0, 0, 0.06);     color: #333; }
+      &.usps   { background: rgba(56, 128, 255, 0.1); color: #3880FF; }
+      &.dhl    { background: rgba(244, 67, 54, 0.1);  color: #F44336; }
+    }
+
+    .wh-pkg-arrow {
+      font-size: 14px;
+      color: rgba(0,0,0,0.2);
+    }
   }
 }
 
@@ -1056,4 +1105,256 @@
   0% { transform: scale(1); opacity: 0.6; }
   50% { transform: scale(1.1); opacity: 1; }
   100% { transform: scale(1); opacity: 0.6; }
+}
+
+/* Warehouse Activity Filtering */
+.warehouse-filters-card {
+  border-radius: 16px;
+  
+  .filter-header {
+    h4 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 750;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #111;
+    }
+  }
+}
+
+.wh-time-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  .filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+  }
+  
+  .time-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+    
+    .tpill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      background: rgba(0, 0, 0, 0.03);
+      color: #666;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit;
+      
+      &.active {
+        background: rgba(235, 132, 85, 0.1);
+        border-color: rgba(235, 132, 85, 0.3);
+        color: #D45520;
+        font-weight: 750;
+      }
+      
+      &:active {
+        transform: scale(0.96);
+      }
+    }
+  }
+}
+
+.wh-employee-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  .filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+  }
+  
+  .employee-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 12px;
+    padding: 8px 12px;
+    
+    ion-icon {
+      font-size: 18px;
+      color: #EB8455;
+    }
+    
+    .employee-native-select {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: #222;
+      font-family: inherit;
+    }
+  }
+}
+
+/* Local Warehouse Search Styling fixes */
+.wh-local-search-row {
+  margin-bottom: 12px;
+  width: 100%;
+  
+  .ledger-search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 12px;
+    padding: 4px 10px;
+    box-sizing: border-box;
+    width: 100%;
+    
+    .search-icon-sm {
+      font-size: 16px;
+      color: #EB8455;
+      flex-shrink: 0;
+    }
+    
+    .clear-partner-search {
+      background: transparent;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      
+      ion-icon {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+.ledger-search-input-field {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111;
+  padding: 6px 0;
+}
+
+// ── Full-screen photo zoom viewer ───────────────────────────────────────────
+// NOTE: re-parented to document.body on open (see openPhotoZoom() in
+// ledger.page.ts) so it always renders above the floating tab bar.
+// IMPORTANT: this is opened FROM INSIDE .detail-backdrop (tap the label photo
+// while the package detail modal is open), so it must sit strictly ABOVE
+// .detail-backdrop's z-index (200000) — don't rely on DOM order between two
+// equal z-index values, that's fragile once both are being independently
+// re-parented to document.body via requestAnimationFrame.
+.photo-zoom-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.96);
+  z-index: 999999 !important;
+  display: flex; align-items: center; justify-content: center;
+
+  .photo-zoom-viewer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .photo-zoom-close-btn {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    color: white;
+    font-size: 26px;
+    z-index: 10;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .photo-zoom-scroll-wrap {
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+
+    .photo-zoom-img {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 4px;
+      user-select: none;
+      -webkit-user-drag: none;
+      will-change: transform;
+    }
+  }
+
+  .photo-zoom-controls {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 28px;
+    padding: 6px 14px;
+    z-index: 10;
+
+    .photo-zoom-ctrl-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.15s;
+      &:active { background: rgba(255,255,255,0.15); }
+      &.reset { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 8px; margin-left: 4px; }
+    }
+
+    .photo-zoom-level {
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 40px;
+      text-align: center;
+    }
+  }
 }

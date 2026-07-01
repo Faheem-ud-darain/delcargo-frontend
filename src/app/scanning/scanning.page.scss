@@ -69,18 +69,8 @@
   cursor: pointer;
   transition: all 0.2s;
 
-  .partner-logo {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800; color: white;
-  }
+  // Logo rendering/coloring now lives inside CarrierBadgeComponent (app-carrier-badge).
   span { font-size: 10px; font-weight: 750; color: #333; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-
-  &.fedex   { .partner-logo { background: #4B2989; } }
-  &.ups     { .partner-logo { background: #ffaa00; color: #111; } }
-  &.amazon  { .partner-logo { background: #232f3e; } }
-  &.dhl-ex  { .partner-logo { background: #d32f2f; } }
-  &.usps    { .partner-logo { background: #3880FF; } }
 
   &:active { transform: scale(0.95); }
 }
@@ -111,19 +101,7 @@
   .partner-row-left {
     display: flex; align-items: center; gap: 12px;
 
-    .partner-row-logo {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: #72727a; color: white;
-      font-size: 10px; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      text-transform: uppercase;
-
-      &.fedex  { background: #4B2989; }
-      &.ups    { background: #ffaa00; color: #111; }
-      &.amazon { background: #232f3e; }
-      &.usps   { background: #3880FF; }
-      &.dhl    { background: #F44336; }
-    }
+    // .partner-row-logo rendering/coloring now lives inside CarrierBadgeComponent.
 
     .partner-row-name { font-size: 13px; font-weight: 700; color: #111; }
   }
@@ -172,16 +150,6 @@
   backdrop-filter: blur(8px); cursor: pointer; transition: all 0.2s;
   &:active { transform: scale(0.95); }
   &[disabled] { opacity: 0.5; pointer-events: none; }
-
-  &.torch-btn {
-    padding: 8px 12px;
-    ion-icon { font-size: 18px; }
-  }
-  &.torch-on {
-    background: rgba(255, 210, 50, 0.85);
-    border-color: rgba(255, 210, 50, 0.5);
-    color: #111;
-  }
 }
 
 .header-title-pill {
@@ -210,7 +178,6 @@
     &:active { transform: scale(0.98); }
     &.count-pill  { background: rgba(0, 0, 0, 0.5); strong { color: #2dd36f; } }
     &.review-pill { background: linear-gradient(135deg, #EB8455 0%, #D45520 100%); box-shadow: 0 4px 12px rgba(212,85,32,0.3); }
-    &.log-pill    { background: rgba(255, 200, 0, 0.3); }
   }
 }
 
@@ -220,19 +187,6 @@
   transform: translate(-50%, -50%);
   z-index: 20;
   display: flex; flex-direction: column; align-items: center;
-}
-
-.debug-panel {
-  position: absolute;
-  bottom: 80px; left: 0; right: 0;
-  max-height: 220px; overflow-y: auto;
-  background: rgba(0, 0, 0, 0.88);
-  color: #0f0; font-family: monospace; font-size: 10px;
-  padding: 8px 10px; z-index: 9999;
-
-  h4 { margin: 0 0 6px; color: #fff; font-size: 11px; border-bottom: 1px solid #0f0; padding-bottom: 4px; }
-  .debug-line  { border-bottom: 1px solid #222; padding: 2px 0; }
-  .debug-empty { color: #888; }
 }
 
 // ── Review batch ──────────────────────────────────────────────────────────────
@@ -248,7 +202,7 @@
 }
 
 .session-scroll-items { display: flex; flex-direction: column; gap: 8px; }
-.review-scroll-list   { max-height: 420px !important; overflow-y: auto; }
+.review-scroll-list   { max-height: calc(100vh - 340px) !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding: 12px 6px !important; }
 
 .review-item-group {
   display: flex; flex-direction: column;
@@ -262,7 +216,7 @@
   padding: 14px 16px; cursor: pointer;
   background: transparent !important; border: none !important;
 
-  .session-item-left { display: flex; align-items: center; gap: 8px;
+  .session-item-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
     .item-carrier-label {
       font-size: 9px; font-weight: 800; text-transform: uppercase;
       padding: 2px 4px; border-radius: 4px;
@@ -272,7 +226,7 @@
       &.usps   { background: rgba(56,128,255,0.1);  color: #3880FF; }
       &.dhl    { background: rgba(244,67,54,0.1);   color: #F44336; }
     }
-    .item-tracking { font-size: 12px; color: #111; }
+    .item-tracking { font-size: 13px; color: #111; word-break: break-all; line-height: 1.45 !important; padding: 3px 0 !important; display: inline-block; }
   }
 
   .session-item-right {
@@ -280,12 +234,25 @@
     .item-status-badge {
       font-size: 9px; font-weight: 750; text-transform: uppercase;
       padding: 2px 6px; border-radius: 4px;
-      &.normal   { background: rgba(45,211,111,0.08); color: #2dd36f; }
-      &.missing  { background: rgba(255,196,9,0.12);  color: #e0ac08; }
-      &.refund   { background: rgba(235,132,85,0.08); color: #EB8455; }
-      &.rejected { background: rgba(235,68,90,0.12);  color: #eb445a; }
+      &.normal   { background: rgba(45,211,111,0.08);  color: #2dd36f; }
+      &.missing  { background: rgba(255,196,9,0.12);   color: #e0ac08; }
+      &.damaged  { background: rgba(235,132,85,0.10);  color: #EB8455; }
+      &.rejected { background: rgba(235,68,90,0.12);   color: #eb445a; }
     }
     .row-chevron { font-size: 16px; color: #888; }
+    .row-remove-btn {
+      background: transparent;
+      border: none;
+      color: #eb445a;
+      font-size: 16px;
+      padding: 4px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+      &:active { opacity: 0.6; }
+    }
   }
 
   &.expanded { background: rgba(0,0,0,0.02) !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; border-radius: 14px 14px 0 0; }
@@ -296,10 +263,19 @@
   border-top: 1px solid rgba(0, 0, 0, 0.04);
 
   .expand-image-wrap {
-    width: 100%; max-height: 160px; border-radius: 10px; overflow: hidden;
+    width: 100%; max-height: 260px; border-radius: 10px; overflow: hidden;
     border: 1px solid rgba(0,0,0,0.08);
     display: flex; align-items: center; justify-content: center; background: #f7f9fc;
-    .expanded-photo { max-width: 100%; max-height: 160px; object-fit: contain; }
+    position: relative; cursor: pointer;
+    .expanded-photo { max-width: 100%; max-height: 260px; object-fit: contain; }
+
+    .zoom-affordance {
+      position: absolute; bottom: 8px; right: 8px;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(0,0,0,0.5); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; pointer-events: none;
+    }
   }
 
   .expand-status-picker {
@@ -320,9 +296,9 @@
 }
 
 .status-action-btn {
-  &.missing-btn  { border-color: rgba(255,196,9,0.25); color: #ffc409; background: rgba(255,196,9,0.05); &.active { background: #ffc409; color: black; } }
-  &.refund-btn   { border-color: rgba(235,132,85,0.25); color: #EB8455; background: rgba(235,132,85,0.05); &.active { background: #EB8455; color: white; } }
-  &.rejected-btn { border-color: rgba(235,68,90,0.25); color: #eb445a; background: rgba(235,68,90,0.05); &.active { background: #eb445a; color: white; } }
+  &.missing-btn  { border-color: rgba(255,196,9,0.25); color: #e0ac08; background: rgba(255,196,9,0.05);   &.active { background: #ffc409; color: black; } }
+  &.damaged-btn  { border-color: rgba(235,132,85,0.3); color: #EB8455; background: rgba(235,132,85,0.06); &.active { background: #EB8455; color: white; } }
+  &.rejected-btn { border-color: rgba(235,68,90,0.25); color: #eb445a; background: rgba(235,68,90,0.05);   &.active { background: #eb445a; color: white; } }
 }
 
 .delete-action-row { }
@@ -405,7 +381,7 @@
   .r-badge { font-size: 8px; font-weight: 850; text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
     &.normal   { background: rgba(45,211,111,0.08); color: #2dd36f; }
     &.missing  { background: rgba(255,196,9,0.12);  color: #e0ac08; }
-    &.refund   { background: rgba(235,132,85,0.08); color: #EB8455; }
+    &.damaged  { background: rgba(235,132,85,0.10); color: #EB8455; }
     &.rejected { background: rgba(235,68,90,0.12);  color: #eb445a; }
   }
 }
@@ -436,4 +412,99 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
   ion-label  { font-size: 10px; color: #666; font-weight: 600; }
   ion-input  { font-weight: 700; color: #111; font-size: 15px; }
+}
+
+// ── Full-screen photo zoom viewer ───────────────────────────────────────────
+// NOTE: this element is re-parented to document.body on open (see
+// openPhotoZoom() in scanning.page.ts) so it always renders above the
+// floating tab bar, regardless of where it started in the DOM.
+.photo-zoom-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.96);
+  z-index: 200000;
+  display: flex; align-items: center; justify-content: center;
+
+  .photo-zoom-viewer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .photo-zoom-close-btn {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    color: white;
+    font-size: 26px;
+    z-index: 10;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .photo-zoom-scroll-wrap {
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+
+    .photo-zoom-img {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 4px;
+      user-select: none;
+      -webkit-user-drag: none;
+      will-change: transform;
+    }
+  }
+
+  .photo-zoom-controls {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 28px;
+    padding: 6px 14px;
+    z-index: 10;
+
+    .photo-zoom-ctrl-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.15s;
+      &:active { background: rgba(255,255,255,0.15); }
+      &.reset { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 8px; margin-left: 4px; }
+    }
+
+    .photo-zoom-level {
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 40px;
+      text-align: center;
+    }
+  }
 }

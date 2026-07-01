@@ -14,7 +14,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+<ion-content [fullscreen]="true" class="ion-padding content-bg" [scrollEvents]="true" (ionScroll)="onScroll($event)" [scrollY]="!selectedPackage && !fullScreenImageUrl">
 
   <!-- ============================================== -->
   <!-- 1. ADMIN WAREHOUSE OVERVIEW PANEL              -->
@@ -23,6 +23,46 @@
     <div class="section-title ion-margin-bottom">
       <h3>Active Warehouse Nodes</h3>
       <p>Real-time telemetry and package indexing status per location</p>
+    </div>
+
+    <!-- Org-wide Summary Strip -->
+    <div class="stats-grid ion-margin-bottom">
+      <div class="stat-card liquid-glass">
+        <div class="stat-icon-wrapper purple">
+          <ion-icon name="business-outline"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <h3>{{ orgTotals.warehouseCount }}</h3>
+          <p>Warehouses</p>
+        </div>
+      </div>
+      <div class="stat-card liquid-glass">
+        <div class="stat-icon-wrapper blue">
+          <ion-icon name="cube-outline"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <h3>{{ orgTotals.live }}</h3>
+          <p>Live Packages</p>
+        </div>
+      </div>
+      <div class="stat-card liquid-glass">
+        <div class="stat-icon-wrapper orange">
+          <ion-icon name="archive-outline"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <h3>{{ orgTotals.archive }}</h3>
+          <p>Archived</p>
+        </div>
+      </div>
+      <div class="stat-card liquid-glass">
+        <div class="stat-icon-wrapper green">
+          <ion-icon name="people-outline"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <h3>{{ orgTotals.operators }}</h3>
+          <p>Staff On Record</p>
+        </div>
+      </div>
     </div>
 
     <!-- Warehouse Grid Cards -->
@@ -69,8 +109,12 @@
   <!-- ============================================== -->
   <!-- 2. ADMIN SELECTED WAREHOUSE DETAILED HISTORY  -->
   <!-- ============================================== -->
-  <div *ngIf="user?.role === 'admin' && selectedWarehouseId && selectedWarehouse">
-    <button class="back-overview-btn liquid-glass ion-margin-bottom" (click)="clearWarehouseSelection()">
+  <!-- ============================================== -->
+  <!-- 2. ADMIN & MANAGER DETAILED WAREHOUSE HISTORY -->
+  <!-- ============================================== -->
+  <div *ngIf="(user?.role === 'admin' || user?.role === 'manager') && selectedWarehouseId && selectedWarehouse">
+    
+    <button *ngIf="user?.role === 'admin'" class="back-overview-btn liquid-glass ion-margin-bottom" (click)="clearWarehouseSelection()">
       <ion-icon name="arrow-back-outline"></ion-icon> Back to Global Overview
     </button>
 
@@ -109,14 +153,67 @@
     </div>
 
     <!-- Active Staff at this location -->
-    <div class="wh-staff-section liquid-glass ion-padding ion-margin-bottom" *ngIf="selectedWarehouseUsers.length > 0">
-      <h4><ion-icon name="people-outline" color="primary"></ion-icon> On-Site Operators</h4>
+    <div class="wh-staff-section liquid-glass ion-padding ion-margin-bottom" *ngIf="filteredWarehouseUsers.length > 0">
+      <h4><ion-icon name="people-outline" color="primary"></ion-icon> On-Site Operators / Staff</h4>
       <div class="staff-bubbles-row">
-        <div class="staff-bubble-card" *ngFor="let staff of selectedWarehouseUsers">
+        <div class="staff-bubble-card" *ngFor="let staff of filteredWarehouseUsers">
           <div class="staff-avatar">
             <ion-icon name="person-outline"></ion-icon>
           </div>
           <span>{{ staff.username }}</span>
+          <span class="user-role-badge-tag" [class]="staff.role">
+            {{ staff.role === 'manager' ? '[MANAGER]' : '[EMPLOYEE]' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters & Local Search for Warehouse Activity -->
+    <div class="warehouse-filters-card liquid-glass ion-padding ion-margin-bottom">
+      
+      <!-- Smart Local Search inside this Warehouse -->
+      <div class="wh-local-search-row">
+        <div class="ledger-search-input-wrap">
+          <ion-icon name="search-outline" class="search-icon-sm"></ion-icon>
+          <input 
+            type="text"
+            [(ngModel)]="whSearchQuery"
+            (input)="onWhSearchInput()"
+            placeholder="Search inside this warehouse (tracking, carrier, operator...)" 
+            class="ledger-search-input-field"
+          />
+          <button class="clear-partner-search" *ngIf="whSearchQuery" (click)="whSearchQuery = ''; onWhSearchInput();">
+            <ion-icon name="close-circle" color="medium"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-header ion-margin-top">
+        <h4><ion-icon name="funnel-outline" color="primary"></ion-icon> Filter Warehouse Activity</h4>
+      </div>
+      
+      <!-- Time Range Select Buttons -->
+      <div class="wh-time-filters ion-margin-top">
+        <span class="filter-label">Time Frame:</span>
+        <div class="time-pills">
+          <button class="tpill" [class.active]="whTimeFilter === 'all'" (click)="onWhTimeFilterChange('all')">All Time</button>
+          <button class="tpill" [class.active]="whTimeFilter === 'day'" (click)="onWhTimeFilterChange('day')">Daily</button>
+          <button class="tpill" [class.active]="whTimeFilter === 'month'" (click)="onWhTimeFilterChange('month')">Monthly</button>
+          <button class="tpill" [class.active]="whTimeFilter === 'year'" (click)="onWhTimeFilterChange('year')">Yearly</button>
+        </div>
+      </div>
+
+      <!-- Employee Select Row -->
+      <div class="wh-employee-filter ion-margin-top">
+        <span class="filter-label">Filter by Employee / Manager:</span>
+        <div class="employee-select-wrap">
+          <ion-icon name="person-circle-outline"></ion-icon>
+          <select [value]="whOperatorFilter" (change)="onWhOperatorFilterChange($any($event.target).value)" class="employee-native-select">
+            <option value="">All Employees & Managers</option>
+            <option *ngFor="let staff of selectedWarehouseUsers" [value]="staff.username">
+              {{ staff.username }} ({{ staff.role }})
+            </option>
+          </select>
         </div>
       </div>
     </div>
@@ -124,36 +221,50 @@
     <!-- Ledger / history of this warehouse specifically -->
     <div class="section-title ion-margin-bottom">
       <h3>Warehouse Activity History</h3>
-      <p>Showing all packages logged by node staff. Click any entry to inspect metadata.</p>
+      <p>Showing logged packages matching filters. Click any entry to inspect metadata.</p>
     </div>
 
-    <div class="package-list">
-      <div class="empty-state ion-text-center ion-padding" *ngIf="selectedWarehousePackages.length === 0">
-        <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
-        <h3>No Packages Found</h3>
-        <p>No transactions registered for this node yet.</p>
+    <div class="wh-package-list-wrap liquid-glass">
+      <!-- Loading State -->
+      <div class="ledger-loading" *ngIf="isLoading">
+        <ion-spinner name="dots" color="primary"></ion-spinner>
+        <span>Loading warehouse activity...</span>
       </div>
 
-      <div 
-        class="package-card liquid-glass ion-padding ion-margin-bottom" 
-        *ngFor="let pkg of selectedWarehousePackages"
-        (click)="openDetail(pkg)"
-      >
-        <div class="pkg-header">
-          <span class="carrier-badge" [class]="pkg.carrier.toLowerCase()">{{ pkg.carrier }}</span>
-          <span class="pkg-date">{{ pkg.receivedAt | date:'MMM d, y, h:mm a' }}</span>
-        </div>
-        <div class="pkg-body">
-          <h3 class="tracking-title">{{ pkg.trackingNumber }}</h3>
-          <p class="pkg-meta">
-            <ion-icon name="person-outline"></ion-icon> Scanned by: <strong>{{ pkg.receivedBy }}</strong>
-          </p>
-        </div>
-        <div class="pkg-footer" *ngIf="pkg.deliveryCountPhotos.length > 0">
-          <ion-chip class="count-badge">
-            <ion-icon name="checkmark-done-circle-outline"></ion-icon>
-            <ion-label>Count Verified ({{ pkg.deliveryCountPhotos.length }} photo(s))</ion-label>
-          </ion-chip>
+      <!-- Empty State -->
+      <div class="empty-state ion-text-center ion-padding" *ngIf="!isLoading && filteredWarehousePackages.length === 0">
+        <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
+        <h3>No Packages Found</h3>
+        <p>No transactions match your current filters.</p>
+      </div>
+
+      <div class="wh-package-list" *ngIf="!isLoading && filteredWarehousePackages.length > 0">
+        <div
+          class="wh-package-row"
+          *ngFor="let pkg of filteredWarehousePackages"
+          (click)="openDetail(pkg)"
+        >
+          <app-carrier-badge class="wh-pkg-carrier-dot" [carrier]="pkg.carrier" [size]="36"></app-carrier-badge>
+
+          <div class="wh-pkg-info">
+            <span class="wh-pkg-tracking">{{ pkg.trackingNumber }}</span>
+            <span class="wh-pkg-meta">
+              <ion-icon name="person-outline"></ion-icon> {{ pkg.receivedBy }}
+              &bull;
+              <ion-icon name="time-outline"></ion-icon> {{ pkg.receivedAt | date:'MMM d, h:mm a' }}
+            </span>
+          </div>
+
+          <div class="wh-pkg-right">
+            <ion-icon
+              *ngIf="pkg.deliveryCountPhotos && pkg.deliveryCountPhotos.length > 0"
+              name="checkmark-done-circle"
+              class="wh-pkg-verified-icon"
+              title="Count verified"
+            ></ion-icon>
+            <span class="wh-pkg-carrier-tag" [class]="pkg.carrier.toLowerCase()">{{ pkg.carrier }}</span>
+            <ion-icon name="chevron-forward-outline" class="wh-pkg-arrow"></ion-icon>
+          </div>
         </div>
       </div>
     </div>
@@ -348,9 +459,7 @@
           (click)="openDetail(pkg)"
         >
           <!-- Carrier Logo -->
-          <div class="ledger-carrier-dot" [class]="pkg.carrier.toLowerCase()">
-            {{ pkg.carrier.substring(0, 2) }}
-          </div>
+          <app-carrier-badge class="ledger-carrier-dot" [carrier]="pkg.carrier" [size]="36"></app-carrier-badge>
 
           <!-- Package Info -->
           <div class="ledger-pkg-info">
@@ -394,9 +503,7 @@
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="modal-header-left">
-          <div class="modal-carrier-badge" [class]="selectedPackage.carrier.toLowerCase()">
-            {{ selectedPackage.carrier.substring(0, 2) }}
-          </div>
+          <app-carrier-badge class="modal-carrier-badge" [carrier]="selectedPackage.carrier" [size]="44"></app-carrier-badge>
           <div>
             <h3>Package Details</h3>
             <span class="modal-carrier-label" [class]="'carrier-badge ' + selectedPackage.carrier.toLowerCase()">
@@ -460,8 +567,8 @@
         <!-- Label Image -->
         <div class="modal-img-section">
           <span class="modal-img-label">SHIPPING LABEL (AUTO-ORIENTED)</span>
-          <div class="modal-img-box">
-            <img [src]="selectedPackage.labelPhoto" alt="Shipping label" />
+          <div class="modal-img-box" style="cursor: pointer;" (click)="openPhotoZoom(selectedPackage.localPhotoUrl || selectedPackage.labelPhoto)">
+            <img [src]="selectedPackage.localPhotoUrl || selectedPackage.labelPhoto" alt="Shipping label" />
           </div>
         </div>
 
@@ -489,4 +596,46 @@
     </div>
   </div>
 
+
 </ion-content>
+
+<!-- ============================================================ -->
+<!-- FULL SCREEN PHOTO ZOOM VIEWER (pinch / double-tap to zoom)    -->
+<!-- ============================================================ -->
+<div class="photo-zoom-backdrop" *ngIf="fullScreenImageUrl" (click)="closePhotoZoom()">
+  <div class="photo-zoom-viewer" (click)="$event.stopPropagation()">
+    <button class="photo-zoom-close-btn" (click)="closePhotoZoom()">
+      <ion-icon name="close-circle-outline"></ion-icon>
+    </button>
+
+    <div class="photo-zoom-scroll-wrap"
+         (touchstart)="onZoomTouchStart($event)"
+         (touchmove)="onZoomTouchMove($event)"
+         (touchend)="onZoomTouchEnd($event)">
+      <img [src]="fullScreenImageUrl"
+           class="photo-zoom-img"
+           [style.transform]="viewerTransform"
+           [style.transition]="viewerTransition"
+           draggable="false" />
+    </div>
+
+    <div class="photo-zoom-controls">
+      <button class="photo-zoom-ctrl-btn" (click)="rotateManual('left')" title="Rotate Left">
+        <ion-icon name="refresh-outline" style="transform: scaleX(-1);"></ion-icon>
+      </button>
+      <button class="photo-zoom-ctrl-btn" (click)="viewerZoomStep(-0.3)">
+        <ion-icon name="remove-outline"></ion-icon>
+      </button>
+      <span class="photo-zoom-level">{{ (viewerScale * 100) | number:'1.0-0' }}%</span>
+      <button class="photo-zoom-ctrl-btn" (click)="viewerZoomStep(0.3)">
+        <ion-icon name="add-outline"></ion-icon>
+      </button>
+      <button class="photo-zoom-ctrl-btn" (click)="rotateManual('right')" title="Rotate Right">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </button>
+      <button class="photo-zoom-ctrl-btn reset" (click)="viewerResetZoom()">
+        <ion-icon name="contract-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+</div>
